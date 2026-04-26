@@ -3,133 +3,99 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <a href="/rooms" class="btn btn-outline-secondary btn-sm">Back to List</a>
-    <div class="text-muted small">System ID: {{ room.roomId }}</div>
+    <a href="/rooms" class="btn btn-outline-secondary btn-sm">Back to Resources</a>
+    <div class="text-muted small">System ID: {{ room.resourceId }}</div>
 </div>
-
 
 <div class="row">
     <div class="col-lg-8">
 
-        <!-- ====================== 大图 + 叠加信息 ====================== -->
-        <div class="card border-0 shadow-sm mb-4 rounded-0 overflow-hidden">
-            <div class="position-relative">
-
-                <!-- 自动匹配房型图片 -->
-                {% set func_code = room.functionCode|default('SLP') %}
-                {% set img_map = {
-                    'SLP': 'guest_room.jpg',
-                    'STE': 'grand_suite.jpg',
-                    'MTG': 'meeting_salon.jpg'
-                } %}
-                {% set img_path = img_map.get(func_code, 'default.jpg') %}
-
-                <img src="{{ url_for('static', filename='images/rooms/' ~ img_path) }}"
-                     class="w-100"
-                     style="height: 460px; object-fit: cover;"
-                     alt="{{ room.funcName }}">
-
-                <!-- 房间号大标题（居中上方）-->
-                <div class="position-absolute top-0 start-50 translate-middle-x text-center pt-5 w-100">
-                    <h1 class="text-white mb-0" style="font-family: 'Cinzel', serif; font-size: 5rem; text-shadow: 4px 4px 12px rgba(0,0,0,0.8);">
-                        Resource {{ room.roomNumber }}
-                    </h1>
-                    <p class="text-white text-opacity-80 fw-light" style="letter-spacing: 2px;">
-                        {{ room.wingName }} / Floor {{ room.floorNo }}
-                    </p>
-                </div>
-
-                <!-- 左下角：房型名称 -->
-                <div class="position-absolute bottom-0 start-0 p-5">
-                    <div class="bg-black bg-opacity-80 text-white px-5 py-3"
-                         style="font-family: 'Cinzel', serif; font-size: 2rem; letter-spacing: 1px;">
-                        {{ room.funcName|default('Guest Room') }}
+        <!-- Resource Header Card -->
+        <div class="card border-0 shadow-sm mb-4 rounded-0">
+            <div class="card-body p-0">
+                <div class="position-relative p-5"
+                     style="background: linear-gradient(135deg, var(--primary-black) 0%, #0d3b55 100%); min-height: 220px;">
+                    <div class="text-center pt-2">
+                        <h1 class="text-white mb-1" style="font-family: 'Cinzel', serif; font-size: 3.5rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.6);">
+                            {{ room.roomNumber }}
+                        </h1>
+                        <p class="mb-0" style="color: var(--primary-gold); letter-spacing: 2px; font-size: 0.85rem; text-transform: uppercase;">
+                            {{ room.datacenterName if room.datacenterName else room.wingName }} &nbsp;/&nbsp; {{ room.zoneName if room.zoneName else room.floorNo }}
+                        </p>
                     </div>
-                </div>
 
-                <!-- 右下角：房价 + 状态徽章 -->
-                <div class="position-absolute bottom-0 end-0 p-5 text-end">
-                    <div class="d-inline-block bg-gold text-black px-5 py-3 mb-3"
-                         style="font-size: 1.8rem; font-weight: 700; font-family: 'Cinzel', serif;">
-                        ${{ "%.0f"|format(room.baseRate) }}
+                    <div class="position-absolute bottom-0 start-0 p-4">
+                        <div class="bg-black bg-opacity-70 text-white px-4 py-2"
+                             style="font-family: 'Cinzel', serif; font-size: 1.4rem; letter-spacing: 1px;">
+                            {{ room.funcName }}
+                        </div>
                     </div>
-                    <div class="d-block">
-                        <span class="status-badge {% if room.currentStatus=='Clean' %}status-clean{% elif room.currentStatus=='Occupied' %}status-occupied{% else %}status-dirty{% endif %}">
-                            {{ room.currentStatus }}
-                        </span>
+
+                    <div class="position-absolute bottom-0 end-0 p-4 text-end">
+                        <div class="d-inline-block mb-2 px-4 py-2"
+                             style="background: var(--primary-gold); font-size: 1.4rem; font-weight: 700; font-family: 'Cinzel', serif; color: #000;">
+                            ${{ "%.2f"|format(room.baseRate) }}/hr
+                        </div>
+                        <div class="d-block">
+                            <span class="status-badge {% if room.currentStatus=='available' %}status-clean{% elif room.currentStatus=='in-use' %}status-occupied{% else %}status-dirty{% endif %}">
+                                {{ room.currentStatus }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- ====================== 大图结束 ====================== -->
 
-        <!-- ====================== 详细信息卡片 ====================== -->
+        <!-- Details Card -->
         <div class="card border-0 shadow-sm mb-4 rounded-0">
             <div class="card-body p-5">
 
-                <!-- Configuration + Bedding -->
                 <div class="row g-5 mb-5">
                     <div class="col-md-6">
                         <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2" style="border-color: var(--primary-gold);">Configuration</h6>
                         <ul class="list-unstyled">
                             <li class="mb-3 d-flex justify-content-between">
-                                <span class="text-muted">Type</span>
-                                <strong>{{ room.funcName|default('Guest Room') }}</strong>
+                                <span class="text-muted">Category</span>
+                                <strong>{{ room.category }}</strong>
                             </li>
                             <li class="mb-3 d-flex justify-content-between">
-                                <span class="text-muted">Smoking</span>
-                                {% if room.isSmokingRoom %}
-                                    <span class="text-danger fw-bold">Allowed</span>
-                                {% else %}
-                                    <span class="text-success fw-bold">Non-Smoking</span>
-                                {% endif %}
+                                <span class="text-muted">Performance Tier</span>
+                                <strong>{{ room.performanceTier }}</strong>
+                            </li>
+                            <li class="mb-3 d-flex justify-content-between">
+                                <span class="text-muted">Current Config</span>
+                                <strong>{{ room.currentConfig or 'Standard' }}</strong>
+                            </li>
+                            <li class="mb-3 d-flex justify-content-between">
+                                <span class="text-muted">Region</span>
+                                <strong>{{ room.buildingName }}</strong>
+                            </li>
+                            <li class="mb-3 d-flex justify-content-between">
+                                <span class="text-muted">Commissioned</span>
+                                <strong>{{ room.commissionedAt[:10] if room.commissionedAt else '—' }}</strong>
                             </li>
                         </ul>
                     </div>
 
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2" style="border-color: var(--primary-gold);">Bedding</h6>
+                        <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2" style="border-color: var(--primary-gold);">Components</h6>
                         {% if beds %}
-                            {% for bed in beds %}
+                            {% for comp in beds %}
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span>{{ bed.name }} <small class="text-muted">(Cap: {{ bed.capacity }})</small></span>
-                                <span class="badge bg-dark rounded-0">x{{ bed.count }}</span>
+                                <span>{{ comp.name }} <small class="text-muted">({{ comp.capacity }})</small></span>
+                                <span class="badge bg-dark rounded-0">{{ comp.status }}</span>
                             </div>
                             {% endfor %}
                         {% else %}
-                            <p class="text-muted fst-italic">Standard Setup</p>
+                            <p class="text-muted fst-italic">No sub-components registered.</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Amenities 金边卡片 -->
-                <div class="mt-5">
-                    <h6 class="fw-bold text-uppercase mb-4 border-bottom pb-3" style="border-color: var(--primary-gold) !important;">
-                        Amenities
-                    </h6>
-                    {% if fixtures %}
-                    <div class="row g-3">
-                        {% for fix in fixtures %}
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <div class="text-center p-4 border border-2 rounded-0 amenity-card"
-                                 style="border-color: var(--primary-gold) !important; background: white;">
-                                <span class="text-uppercase fw-bold" style="letter-spacing: 1.2px; color: var(--primary-black);">
-                                    {{ fix.name }}
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                        <p class="text-muted fst-italic">Standard Amenities</p>
-                    {% endif %}
-                </div>
-
             </div>
         </div>
-        <!-- ====================== 详细信息结束 ====================== -->
 
-        <!-- ====================== Tab 区域（保持你原有代码） ====================== -->
+        <!-- Tabs -->
         <div class="card border-0 shadow-sm rounded-0">
             <div class="card-header bg-light border-bottom-0 pt-3 px-4">
                 <ul class="nav nav-tabs card-header-tabs" id="roomTabs" role="tablist">
@@ -153,11 +119,11 @@
                                     {% for h in history %}
                                     <tr>
                                         <td>{{ h.checkInTime[:10] if h.checkInTime else '-' }}</td>
-                                        <td>{{ h.checkOutTime[:10] if h.checkOutTime else 'Current' }}</td>
+                                        <td>{{ h.checkOutTime[:10] if h.checkOutTime else 'Active' }}</td>
                                         <td><strong>{{ h.guestName or '—' }}</strong></td>
                                     </tr>
                                     {% else %}
-                                    <tr><td colspan="3" class="p-4 text-center text-muted">No history found.</td></tr>
+                                    <tr><td colspan="3" class="p-4 text-center text-muted">No usage history found.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -192,7 +158,7 @@
 
     </div>
 
-    <!-- ====================== 右侧 Adjacency ====================== -->
+    <!-- Right: Connected Resources -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm rounded-0 mb-4">
             <div class="card-header bg-white fw-bold text-uppercase text-muted small">Connected Resources</div>
@@ -201,7 +167,7 @@
                     <ul class="list-group list-group-flush">
                         {% for adj in adjacencies %}
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <a href="/room/{{ adj.roomId }}" class="fw-bold text-dark text-decoration-none">Resource {{ adj.roomNumber }}</a>
+                            <a href="/room/{{ adj.roomId }}" class="fw-bold text-dark text-decoration-none">{{ adj.roomNumber }}</a>
                             <span class="badge bg-light text-dark border rounded-0">{{ adj.connectionType }}</span>
                         </li>
                         {% endfor %}
@@ -215,4 +181,3 @@
 </div>
 
 {% endblock %}
-

@@ -41,11 +41,11 @@
                 <td class="text-nowrap">
                     <a href="/room/{{ room.roomId }}" class="text-decoration-none fw-bold fs-5 text-dark" style="font-family: 'Cinzel', serif;">{{ room.roomNumber }}</a>
                 </td>
-                <td>{{ room.wingName }} <span class="text-muted">/</span> Floor {{ room.floorNo }}</td>
+                <td>{{ room.wingName }} <span class="text-muted">/</span> {{ room.floorNo }}</td>
                 <td>{{ room.funcName }}</td>
                 <td class="text-nowrap fw-bold" style="color: var(--primary-gold); font-family: monospace;">${{ room.baseRate }}</td>
                 <td class="text-nowrap text-center">
-                    <span class="status-badge {% if room.currentStatus=='Clean' %}status-clean{% elif room.currentStatus=='Occupied' %}status-occupied{% else %}status-dirty{% endif %}">
+                    <span class="status-badge {% if room.currentStatus=='available' %}status-clean{% elif room.currentStatus=='in-use' %}status-occupied{% else %}status-dirty{% endif %}">
                         {{ room.currentStatus }}
                     </span>
                 </td>

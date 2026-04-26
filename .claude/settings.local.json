@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"python app.py\")",
+      "Bash(python app.py)"
+    ]
+  }
+}

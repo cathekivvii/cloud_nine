@@ -1,26 +1,26 @@
 <!-- checked: Checkin verified -->
 {% extends "base.html" %}
 {% block content %}
-<h2>Check In: {{ resv.guestName }}</h2>
+<h2>Activate Reservation: {{ resv.guestName }}</h2>
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card p-3 mb-3">
-            <h5>Details</h5>
-            <p><strong>Arrival:</strong> {{ resv.startDate }}</p>
-            <p><strong>Departure:</strong> {{ resv.endDate }}</p>
+            <h5>Reservation Details</h5>
+            <p><strong>Start:</strong> {{ resv.startDate }}</p>
+            <p><strong>End:</strong> {{ resv.endDate }}</p>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card p-3">
-            <h5>Assign Room</h5>
-            <div class="alert alert-info">Select a clean room to assign.</div>
+            <h5>Assign Resource</h5>
+            <div class="alert alert-info">Select an available resource to assign.</div>
             <form>
                 <select class="form-select mb-3">
                     {% for r in rooms %}
-                    <option value="{{ r.roomId }}">{{ r.roomNumber }} - {{ r.currentStatus }} (${{ r.baseRate }})</option>
+                    <option value="{{ r.roomId }}">{{ r.roomNumber }} — {{ r.funcName }} (${{ r.baseRate }}/hr)</option>
                     {% endfor %}
                 </select>
-                <button class="btn btn-success w-100">Complete Check In</button>
+                <button class="btn btn-success w-100">Activate Deployment</button>
             </form>
         </div>
     </div>
