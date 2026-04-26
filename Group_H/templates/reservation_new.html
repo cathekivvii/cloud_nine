@@ -13,24 +13,24 @@
             <form method="POST" action="/reservations/new">
                 
                 <!-- Guest Selection Section -->
-                <h5 class="text-primary-navy border-bottom pb-2 mb-3">1. Guest Information</h5>
-                
+                <h5 class="text-primary-navy border-bottom pb-2 mb-3">1. Client Information</h5>
+
                 <div class="mb-3">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="guest_mode" id="modeExisting" value="existing" checked onclick="toggleGuestMode()">
-                        <label class="form-check-label" for="modeExisting">Select Existing Guest</label>
+                        <label class="form-check-label" for="modeExisting">Select Existing Client</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="guest_mode" id="modeNew" value="new" onclick="toggleGuestMode()">
-                        <label class="form-check-label" for="modeNew">Create New Guest</label>
+                        <label class="form-check-label" for="modeNew">Create New Client</label>
                     </div>
                 </div>
 
-                <!-- Existing Guest Dropdown -->
+                <!-- Existing Client Dropdown -->
                 <div id="existingGuestSection" class="mb-4">
-                    <label class="form-label">Select Guest/Party</label>
+                    <label class="form-label">Select Client/Party</label>
                     <select name="party_id" class="form-select">
-                        <option value="" disabled selected>-- Choose a Guest --</option>
+                        <option value="" disabled selected>-- Choose a Client --</option>
                         {% for p in parties %}
                         <option value="{{ p.partyId }}">{{ p.name }} (ID: {{ p.partyId }})</option>
                         {% endfor %}
@@ -57,18 +57,18 @@
                             <input type="text" name="phone" class="form-control">
                         </div>
                     </div>
-                    <div class="form-text mt-2">New guest will be created automatically.</div>
+                    <div class="form-text mt-2">New client will be created automatically.</div>
                 </div>
 
                 <!-- Stay Details -->
-                <h5 class="text-primary-navy border-bottom pb-2 mb-3 mt-4">2. Stay Details</h5>
+                <h5 class="text-primary-navy border-bottom pb-2 mb-3 mt-4">2. Reservation Details</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label">Arrival Date *</label>
+                        <label class="form-label">Start Date *</label>
                         <input type="date" name="start_date" class="form-control" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Departure Date *</label>
+                        <label class="form-label">End Date *</label>
                         <input type="date" name="end_date" class="form-control" required>
                     </div>
                 </div>

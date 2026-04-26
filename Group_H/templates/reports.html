@@ -39,7 +39,7 @@
         <div class="col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Occupancy (Last 7 Days)</h5>
+                    <h5 class="mb-0">Active Deployments (Last 7 Days)</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="occupancyChart" style="max-height: 300px;"></canvas>
@@ -51,7 +51,7 @@
     <div class="row mb-5">
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-white"><h5 class="mb-0">Revenue Mix (Non-Room)</h5></div>
+                <div class="card-header bg-white"><h5 class="mb-0">Revenue Mix (Non-Compute)</h5></div>
                 <div class="card-body">
                     <div style="max-width: 350px; margin: 0 auto;">
                         <canvas id="serviceChart"></canvas>
@@ -62,7 +62,7 @@
 
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-white"><h5 class="mb-0">Guest Composition</h5></div>
+                <div class="card-header bg-white"><h5 class="mb-0">Client Composition</h5></div>
                 <div class="card-body">
                     <div style="max-width: 350px; margin: 0 auto;">
                         <canvas id="demoChart"></canvas>
@@ -99,7 +99,7 @@
 
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
-                <div class="card-header bg-white"><h5 class="mb-0">Room Utilization</h5></div>
+                <div class="card-header bg-white"><h5 class="mb-0">Resource Utilization</h5></div>
                 <div class="card-body">
                     <table class="table table-sm">
                         <thead><tr><th>Type</th><th>Total</th><th>Occupied</th><th>Rate</th></tr></thead>
@@ -126,15 +126,15 @@
 
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
-                <div class="card-header bg-white"><h5 class="mb-0">Average Length of Stay</h5></div>
+                <div class="card-header bg-white"><h5 class="mb-0">Average Deployment Duration</h5></div>
                 <div class="card-body">
                     <table class="table table-sm">
-                        <thead><tr><th>Room Type</th><th>Avg Nights</th></tr></thead>
+                        <thead><tr><th>Resource Type</th><th>Avg Hours</th></tr></thead>
                         <tbody>
                             {% for row in report_average_stay %}
                             <tr>
                                 <td>{{ row.room_type }}</td>
-                                <td><strong>{{ row.avg_stay }}</strong> Nights</td>
+                                <td><strong>{{ row.avg_stay }}</strong> Hours</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -174,8 +174,8 @@
             datasets: [{
                 label: 'Revenue ($)',
                 data: {{ c1_data | tojson }},
-                borderColor: '#c5a059', 
-                backgroundColor: 'rgba(197, 160, 89, 0.1)',
+                borderColor: '#0096c7',
+                backgroundColor: 'rgba(0, 150, 199, 0.1)',
                 fill: true,
                 tension: 0.3
             }]
@@ -189,7 +189,7 @@
         data: {
             labels: {{ c2_labels | tojson }},
             datasets: [{
-                label: 'Occupied Rooms',
+                label: 'Active Resources',
                 data: {{ c2_data | tojson }},
                 backgroundColor: '#1a2530', 
                 borderRadius: 4
@@ -205,7 +205,7 @@
             labels: {{ c3_labels | tojson }},
             datasets: [{
                 data: {{ c3_data | tojson }},
-                backgroundColor: ['#c5a059', '#1a2530', '#85929e', '#e74c3c'],
+                backgroundColor: ['#0096c7', '#0a1628', '#48cae4', '#e74c3c'],
                 hoverOffset: 4
             }]
         }

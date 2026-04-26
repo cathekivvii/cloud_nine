@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Montserrat:wght@300;400;500;600&display=swap');
 
 :root {
-    --primary-black: #111;
-    --primary-gold: #c5a059;
+    --primary-black: #0a1628;
+    --primary-gold: #0096c7;
     --text-dark: #333;
     --table-header-grey: #f8f9fa;
     --border-color: #e5e5e5;
@@ -16,7 +16,7 @@
 
 body {
     font-family: 'Montserrat', sans-serif;
-    background-color: #fcfcfc;
+    background-color: #e8f5e9;
     color: var(--text-dark);
 }
 

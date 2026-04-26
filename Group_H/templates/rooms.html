@@ -3,17 +3,17 @@
 {% block content %}
 <div class="row align-items-center mb-4">
     <div class="col-md-5">
-        <h2>Rooms Management <small class="text-muted">({{ rooms|length }})</small></h2>
+        <h2>Resources <small class="text-muted">({{ rooms|length }})</small></h2>
     </div>
     <div class="col-md-7">
         <form action="/rooms" method="get" class="d-flex gap-2 justify-content-end">
-            <input type="text" name="search" class="form-control rounded-0" placeholder="Search Room # or Wing..." value="{{ request.args.get('search', '') }}">
+            <input type="text" name="search" class="form-control rounded-0" placeholder="Search Resource ID or Zone..." value="{{ request.args.get('search', '') }}">
             
             <select name="status" class="form-select w-auto rounded-0" onchange="this.form.submit()">
                 <option value="All">All Statuses</option>
-                <option value="Clean" {% if request.args.get('status') == 'Clean' %}selected{% endif %}>Clean</option>
-                <option value="Dirty" {% if request.args.get('status') == 'Dirty' %}selected{% endif %}>Dirty</option>
-                <option value="Occupied" {% if request.args.get('status') == 'Occupied' %}selected{% endif %}>Occupied</option>
+                <option value="Clean" {% if request.args.get('status') == 'Clean' %}selected{% endif %}>Available</option>
+                <option value="Dirty" {% if request.args.get('status') == 'Dirty' %}selected{% endif %}>Maintenance</option>
+                <option value="Occupied" {% if request.args.get('status') == 'Occupied' %}selected{% endif %}>In Use</option>
             </select>
             
             <button type="submit" class="btn btn-primary">Search</button>
@@ -28,10 +28,10 @@
     <table class="table table-custom align-middle mb-0">
         <thead>
             <tr>
-                <th class="text-nowrap" style="width: 1%;">Room #</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th class="text-nowrap">Rate</th>
+                <th class="text-nowrap" style="width: 1%;">Resource ID</th>
+                <th>Zone / Region</th>
+                <th>Resource Type</th>
+                <th class="text-nowrap">Rate/hr</th>
                 <th class="text-nowrap text-center" style="width: 1%;">Status</th>
             </tr>
         </thead>
@@ -54,5 +54,5 @@
         </tbody>
     </table>
 </div>
-<div class="mt-2 text-muted small text-end">Scroll to view more rooms ↕</div>
+<div class="mt-2 text-muted small text-end">Scroll to view more resources ↕</div>
 {% endblock %}

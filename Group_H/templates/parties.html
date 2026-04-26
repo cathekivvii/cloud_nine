@@ -8,7 +8,7 @@
 
 <div class="row align-items-center mb-4">
     <div class="col-md-5">
-        <h2>Guests & Parties <small class="text-muted">({{ parties|length }})</small></h2>
+        <h2>Clients & Organizations <small class="text-muted">({{ parties|length }})</small></h2>
     </div>
     <div class="col-md-7">
         <form action="/parties" method="get" class="d-flex gap-2 justify-content-end">
@@ -56,10 +56,10 @@
                 <td class="text-nowrap">{{ p.phone }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center p-3 text-muted">No guests found.</td></tr>
+            <tr><td colspan="5" class="text-center p-3 text-muted">No clients found.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-<div class="mt-2 text-muted small text-end">Scroll to view more guests ↕</div>
+<div class="mt-2 text-muted small text-end">Scroll to view more clients ↕</div>
 {% endblock %}
