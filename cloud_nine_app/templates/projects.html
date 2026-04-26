@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Projects</h2>
+    <span class="text-muted-sm">{{ projects|length }} matching</span>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+        <input type="text" name="search" class="form-control form-control-sm"
+               placeholder="Search by project, client, or org"
+               value="{{ request.args.get('search', '') }}">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary btn-sm w-100">Search</button>
+    </div>
+</form>
+
+<div class="table-scroll-container">
+    <table class="table table-hover table-custom mb-0">
+        <thead>
+            <tr><th>Project</th><th>Client</th><th>Org</th><th>Reservations</th><th>Deployments</th><th>Created</th></tr>
+        </thead>
+        <tbody>
+            {% for p in projects %}
+            <tr>
+                <td><a href="/project/{{ p.projectId }}"><strong>{{ p.projectName }}</strong></a><div class="text-muted-sm">{{ p.description or '' }}</div></td>
+                <td><a href="/client/{{ p.clientId }}">{{ p.clientName }}</a></td>
+                <td class="text-muted-sm">{{ p.orgName or '—' }}</td>
+                <td>{{ p.resv_count }}</td>
+                <td>{{ p.dep_count }}</td>
+                <td class="text-muted-sm">{{ p.createdAt }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

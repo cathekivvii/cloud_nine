@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/resources" class="text-muted-sm">← Resources</a></div>
+
+<div class="resource-hero mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2>{{ res.typeName }}</h2>
+            <div class="mono">{{ res.serialNumber }}</div>
+            <div class="mt-2">
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">{{ res.category }}</span>
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">{{ res.performanceTier }} tier</span>
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">${{ '%.2f' % res.baseHourlyRate }}/hr</span>
+            </div>
+        </div>
+        <span class="status-badge {{ status_class(res.status) }}">{{ res.status }}</span>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Location</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    <dl class="detail-grid mb-0">
+                        <dt>Region</dt><dd>{{ res.regionName }} <span class="text-muted-sm">({{ res.regulatoryEnv }})</span></dd>
+                        <dt>Availability Zone</dt><dd>{{ res.zoneName }} <span class="text-muted-sm">({{ res.redundancyLevel }})</span></dd>
+                        <dt>Data Center</dt><dd><a href="/datacenter/{{ res.datacenterId }}">{{ res.datacenterName }}</a><div class="text-muted-sm">{{ res.city }}, {{ res.country }}</div></dd>
+                        <dt>Commissioned</dt><dd>{{ res.commissionedAt }}</dd>
+                        <dt>Max capacity</dt><dd>{{ res.maxCapacity }}</dd>
+                        <dt>Current config</dt><dd class="mono text-muted-sm">{{ res.currentConfig or '—' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Components</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    {% if components %}
+                    <ul class="list-unstyled mb-0">
+                    {% for c in components %}
+                        <li class="mb-2">
+                            <strong>{{ c.componentType }}</strong>
+                            <span class="status-badge {{ status_class(c.status) }} ms-2">{{ c.status }}</span>
+                            <div class="text-muted-sm mono">{{ c.specs or '' }}</div>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted-sm mb-0">No subcomponents recorded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Currently Allocated To</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    {% if current %}
+                    <div><a href="/deployment/{{ current.deploymentId }}" class="mono">{{ current.deploymentName }}</a></div>
+                    <div class="text-muted-sm">Client: {{ current.clientName }}</div>
+                    <div class="text-muted-sm">Started: {{ current.startedAt }}</div>
+                    <span class="status-badge {{ status_class(current.status) }} mt-2">{{ current.status }}</span>
+                    {% else %}
+                    <p class="text-muted-sm mb-0">Not currently allocated.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mt-4" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#deploy-history">Deployment History</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#maint">Maintenance Log</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#access">Access Log</a></li>
+</ul>
+
+<div class="tab-content border border-top-0 p-3 bg-white">
+    <div class="tab-pane fade show active" id="deploy-history">
+        <table class="table mb-0">
+            <thead><tr><th>Deployment</th><th>Status</th><th>Allocated</th><th>Deallocated</th><th>Hours</th></tr></thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td><a href="/deployment/{{ h.deploymentId }}" class="mono">{{ h.deploymentName }}</a></td>
+                    <td><span class="status-badge {{ status_class(h.status) }}">{{ h.status }}</span></td>
+                    <td class="text-muted-sm">{{ h.allocatedAt }}</td>
+                    <td class="text-muted-sm">{{ h.deallocatedAt or '—' }}</td>
+                    <td class="text-muted-sm">{{ h.usageHours or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted-sm">No allocations.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="maint">
+        <table class="table mb-0">
+            <thead><tr><th>Type</th><th>Scheduled</th><th>Actual End</th><th>Staff</th><th>Notes</th></tr></thead>
+            <tbody>
+                {% for m in maintenance %}
+                <tr>
+                    <td>{{ m.maintenanceType }}</td>
+                    <td class="text-muted-sm">{{ m.scheduledStart }} → {{ m.scheduledEnd }}</td>
+                    <td class="text-muted-sm">{{ m.actualEnd or '—' }}</td>
+                    <td>{{ m.staffName }}</td>
+                    <td class="text-muted-sm">{{ m.notes or '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted-sm">No maintenance.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="access">
+        <table class="table mb-0">
+            <thead><tr><th>When</th><th>Client</th><th>Action</th><th>IP</th></tr></thead>
+            <tbody>
+                {% for a in access %}
+                <tr>
+                    <td class="text-muted-sm">{{ a.loggedAt }}</td>
+                    <td><a href="/client/{{ a.clientId }}">{{ a.clientName }}</a></td>
+                    <td>{{ a.action }}</td>
+                    <td class="mono text-muted-sm">{{ a.ipAddress }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted-sm">No access records.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

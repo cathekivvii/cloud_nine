@@ -1,0 +1,25 @@
+{% macro sortable(col_key, label) %}
+    {% set current_sort = request.args.get('sort', '') %}
+    {% set current_order = request.args.get('order', 'asc') %}
+
+    {% if current_sort == col_key %}
+        {% set new_order = 'desc' if current_order == 'asc' else 'asc' %}
+        {% set arrow = '▲' if current_order == 'asc' else '▼' %}
+    {% else %}
+        {% set new_order = 'asc' %}
+        {% set arrow = '' %}
+    {% endif %}
+
+    {%- set qs_parts = [] -%}
+    {%- for k, v in request.args.items() -%}
+        {%- if k not in ['sort', 'order'] -%}
+            {%- set _ = qs_parts.append(k ~ '=' ~ v) -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- set qs_extra = ('&' ~ qs_parts|join('&')) if qs_parts else '' -%}
+
+    <a href="?sort={{ col_key }}&order={{ new_order }}{{ qs_extra }}"
+       class="text-decoration-none text-dark fw-bold">
+       {{ label }} <span>{{ arrow }}</span>
+    </a>
+{% endmacro %}

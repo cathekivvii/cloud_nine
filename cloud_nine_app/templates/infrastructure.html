@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="mb-3">Infrastructure</h2>
+<p class="text-muted-sm">Geographic hierarchy: Region → Availability Zone → Data Center → Resources.</p>
+
+{% for r in regions %}
+{% set util = ((r.in_use_count or 0) / r.resource_count * 100) if r.resource_count else 0 %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ r.regionName }}</strong>
+            <span class="chip ms-2">{{ r.connectivity }}</span>
+            <span class="chip">{{ r.regulatoryEnv }}</span>
+        </div>
+        <div class="text-muted-sm">
+            {{ r.zone_count }} zones • {{ r.dc_count }} data centers • {{ r.resource_count }} resources
+            <span class="ms-3">{{ '%.0f' % util }}%</span>
+            <span class="util-bar ms-2"><span class="util-bar-inner {{ util_class(util) }}" style="width:{{ util }}%"></span></span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="card-body-content">
+            <div class="row g-3">
+            {% for z in zones if z.regionId == r.regionId %}
+                <div class="col-md-6">
+                    <div class="border rounded p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ z.zoneName }}</strong>
+                                <div class="text-muted-sm">{{ z.redundancyLevel }}</div>
+                            </div>
+                            <span class="status-badge {{ status_class(z.status) }}">{{ z.status }}</span>
+                        </div>
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                {% for dc in datacenters if dc.zoneId == z.zoneId %}
+                                {% set dc_util = ((dc.in_use_count or 0) / dc.resource_count * 100) if dc.resource_count else 0 %}
+                                <tr>
+                                    <td><a href="/datacenter/{{ dc.datacenterId }}">{{ dc.name }}</a><div class="text-muted-sm">{{ dc.city }}, {{ dc.country }}</div></td>
+                                    <td class="text-end">
+                                        <span class="status-badge {{ status_class(dc.status) }}">{{ dc.status }}</span>
+                                        <div class="text-muted-sm mt-1">
+                                            {{ dc.in_use_count or 0 }}/{{ dc.resource_count }} in-use
+                                            <span class="util-bar ms-2"><span class="util-bar-inner {{ util_class(dc_util) }}" style="width:{{ dc_util }}%"></span></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

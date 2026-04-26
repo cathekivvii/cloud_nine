@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/billing" class="text-muted-sm">← Billing Accounts</a></div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>{{ account.accountName }}</h2>
+        <div class="text-muted-sm">Owner: {{ account.ownerName }}</div>
+        <div class="mt-2">
+            <span class="status-badge {{ status_class(account.status) }}">{{ account.status }}</span>
+            <span class="chip">{{ account.paymentMethod }}</span>
+            <span class="chip">Limit ${{ '{:,.0f}'.format(account.creditLimit) }}</span>
+        </div>
+    </div>
+    <div class="text-end">
+        <div class="text-muted-sm">Total charges</div>
+        <div class="kpi-value text-money">${{ '{:,.2f}'.format(total_charges) }}</div>
+        <div class="text-muted-sm mt-1">Outstanding</div>
+        <div class="text-money">${{ '{:,.2f}'.format(total_outstanding) }}</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header">Charges ({{ charges|length }})</div>
+            <div class="card-body">
+                <div class="table-scroll-container" style="max-height:380px;">
+                    <table class="table mb-0">
+                        <thead><tr><th>Service</th><th>Deployment</th><th>Amount</th><th>Adjust.</th><th>Status</th><th>Charged</th><th>Inv.</th></tr></thead>
+                        <tbody>
+                            {% for c in charges %}
+                            <tr>
+                                <td>{{ c.serviceName }}</td>
+                                <td class="mono"><a href="/deployment/{{ c.deploymentId }}">{{ c.deploymentName }}</a></td>
+                                <td class="text-money">${{ '{:,.2f}'.format(c.amount) }}</td>
+                                <td class="text-money">{% if c.adjustment_total %}${{ '{:,.2f}'.format(c.adjustment_total) }}{% else %}—{% endif %}</td>
+                                <td><span class="status-badge {{ status_class(c.status) }}">{{ c.status }}</span></td>
+                                <td class="text-muted-sm">{{ c.chargedAt }}</td>
+                                <td>{% if c.invoiceId %}<a href="/invoice/{{ c.invoiceId }}">#{{ c.invoiceId }}</a>{% else %}—{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Invoices ({{ invoices|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>ID</th><th>Period</th><th>Total</th><th>Status</th><th>Due</th></tr></thead>
+                    <tbody>
+                        {% for i in invoices %}
+                        <tr>
+                            <td><a href="/invoice/{{ i.invoiceId }}">#{{ i.invoiceId }}</a></td>
+                            <td class="text-muted-sm">{{ i.periodStart }} → {{ i.periodEnd }}</td>
+                            <td class="text-money">${{ '{:,.2f}'.format(i.totalAmount) }}</td>
+                            <td><span class="status-badge {{ status_class(i.status) }}">{{ i.status }}</span></td>
+                            <td class="text-muted-sm">{{ i.dueAt }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted-sm p-3">No invoices.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Cost Centers ({{ cost_centers|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Center</th><th>Spend</th><th>Budget</th><th>%</th></tr></thead>
+                    <tbody>
+                        {% for cc in cost_centers %}
+                        {% set pct = (cc.spend / cc.budgetLimit * 100) if cc.budgetLimit else 0 %}
+                        <tr>
+                            <td>{{ cc.centerName }}</td>
+                            <td class="text-money">${{ '{:,.2f}'.format(cc.spend) }}</td>
+                            <td class="text-muted-sm">${{ '{:,.0f}'.format(cc.budgetLimit or 0) }}</td>
+                            <td>
+                                <span class="util-bar"><span class="util-bar-inner {{ util_class(pct) }}" style="width:{{ pct if pct < 100 else 100 }}%"></span></span>
+                                <span class="text-muted-sm ms-2">{{ '%.0f' % pct }}%</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted-sm p-3">No cost centers.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

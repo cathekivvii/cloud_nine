@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/invoices" class="text-muted-sm">← Invoices</a></div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>Invoice #{{ invoice.invoiceId }}</h2>
+        <div class="text-muted-sm">
+            Account: <a href="/billing/account/{{ invoice.billingAccountId }}">{{ invoice.accountName }}</a>
+            • Owner: {{ invoice.ownerName }}
+        </div>
+        <div class="mt-2">
+            <span class="status-badge {{ status_class(invoice.status) }}">{{ invoice.status }}</span>
+            <span class="chip">Period {{ invoice.periodStart }} → {{ invoice.periodEnd }}</span>
+            <span class="chip">Issued {{ invoice.issuedAt }}</span>
+            <span class="chip">Due {{ invoice.dueAt }}</span>
+        </div>
+    </div>
+    <div class="text-end">
+        <div class="text-muted-sm">Total</div>
+        <div class="kpi-value text-money">${{ '{:,.2f}'.format(invoice.totalAmount) }}</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Line Items ({{ line_items|length }})</div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead><tr><th>Service</th><th>Deployment</th><th>Charged</th><th>Amount</th></tr></thead>
+            <tbody>
+                {% for li in line_items %}
+                <tr>
+                    <td>{{ li.serviceName }} <span class="text-muted-sm">({{ li.unitOfMeasure }})</span></td>
+                    <td class="mono"><a href="/deployment/{{ li.deploymentId }}">{{ li.deploymentName }}</a></td>
+                    <td class="text-muted-sm">{{ li.chargedAt }}</td>
+                    <td class="text-money">${{ '{:,.2f}'.format(li.amount) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted-sm p-3">No line items.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Cost Center Allocations</div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead><tr><th>Cost Center</th><th>%</th><th>Amount</th><th>Charge Date</th></tr></thead>
+            <tbody>
+                {% for a in allocations %}
+                <tr>
+                    <td>{{ a.centerName }}</td>
+                    <td>{{ a.percentage }}%</td>
+                    <td class="text-money">${{ '{:,.2f}'.format(a.amount) }}</td>
+                    <td class="text-muted-sm">{{ a.chargedAt }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted-sm p-3">No allocations.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

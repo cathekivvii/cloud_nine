@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/deployments" class="text-muted-sm">← Deployments</a></div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mono">{{ dep.deploymentName }}</h2>
+        <div class="text-muted-sm">Deployment #{{ dep.deploymentId }}</div>
+        <div class="mt-2">
+            <span class="status-badge {{ status_class(dep.status) }}">{{ dep.status }}</span>
+            <span class="chip">{{ dep.priority }} priority</span>
+            {% if dep.autoScale %}<span class="chip">auto-scale on</span>{% endif %}
+        </div>
+    </div>
+    <div>
+        {% if dep.status == 'active' %}
+        <form method="POST" action="/deployment/{{ dep.deploymentId }}/stop" style="display:inline">
+            <button class="btn btn-outline-dark btn-sm">Stop deployment</button>
+        </form>
+        {% else %}
+        <form method="POST" action="/deployment/{{ dep.deploymentId }}/start" style="display:inline">
+            <button class="btn btn-primary btn-sm">Restart deployment</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-label">Started</div>
+            <div class="kpi-value" style="font-size:1.2rem">{{ dep.startedAt }}</div>
+            <div class="kpi-sub">Stopped: {{ dep.stoppedAt or '—' }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-label">Client</div>
+            <div class="kpi-value" style="font-size:1.2rem"><a href="/client/{{ dep.clientId }}">{{ dep.clientName }}</a></div>
+            <div class="kpi-sub">via reservation #{{ dep.reservationId }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Charges</div>
+            <div class="kpi-value text-money">${{ '{:,.2f}'.format(total_charges) }}</div>
+            <div class="kpi-sub">{{ charges|length }} line items</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header">Allocated Resources ({{ dep_resources|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Serial #</th><th>Type</th><th>DC</th><th>Allocated</th><th>Deallocated</th><th>Hours</th></tr></thead>
+                    <tbody>
+                        {% for r in dep_resources %}
+                        <tr>
+                            <td class="mono"><a href="/resource/{{ r.resourceId }}">{{ r.serialNumber }}</a></td>
+                            <td>{{ r.typeName }}</td>
+                            <td class="text-muted-sm">{{ r.datacenterName }}</td>
+                            <td class="text-muted-sm">{{ r.allocatedAt }}</td>
+                            <td class="text-muted-sm">{{ r.deallocatedAt or '—' }}</td>
+                            <td class="text-muted-sm">{{ r.usageHours or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-muted-sm p-3">No resources allocated.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Charges</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Service</th><th>Amount</th><th>Status</th><th>Charged</th><th>Invoice</th></tr></thead>
+                    <tbody>
+                        {% for c in charges %}
+                        <tr>
+                            <td>{{ c.serviceName }}</td>
+                            <td class="text-money">${{ '{:,.2f}'.format(c.amount) }}</td>
+                            <td><span class="status-badge {{ status_class(c.status) }}">{{ c.status }}</span></td>
+                            <td class="text-muted-sm">{{ c.chargedAt }}</td>
+                            <td>{% if c.invoiceId %}<a href="/invoice/{{ c.invoiceId }}">#{{ c.invoiceId }}</a>{% else %}—{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted-sm p-3">No charges.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Event Timeline</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    {% if events %}
+                    <ul class="timeline">
+                    {% for e in events %}
+                        <li>
+                            <strong>{{ e.eventType }}</strong>
+                            {% if e.rowKind == 'scale' %}<span class="chip">{{ e.previousScale }} → {{ e.newScale }}</span>{% endif %}
+                            <div class="event-time">{{ e.ts }}{% if e.staffName %} • {{ e.staffName }}{% endif %}</div>
+                            {% if e.notes %}<div class="text-muted-sm">{{ e.notes }}</div>{% endif %}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted-sm mb-0">No events recorded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

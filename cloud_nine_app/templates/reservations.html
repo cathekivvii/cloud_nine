@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% from '_components/sortable.html' import sortable %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Reservations</h2>
+    <a href="/reservations/new" class="btn btn-primary btn-sm">+ New Reservation</a>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-3">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search client / project"
+               value="{{ request.args.get('search', '') }}">
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+            <option value="All">All statuses</option>
+            {% for s in statuses %}
+            <option value="{{ s.status }}" {% if request.args.get('status') == s.status %}selected{% endif %}>{{ s.status }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="priority" class="form-select form-select-sm">
+            <option value="All">All priorities</option>
+            {% for p in priorities %}
+            <option value="{{ p.priority }}" {% if request.args.get('priority') == p.priority %}selected{% endif %}>{{ p.priority }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary btn-sm w-100">Apply</button>
+    </div>
+</form>
+
+<div class="table-scroll-container">
+    <table class="table table-hover table-custom mb-0">
+        <thead>
+            <tr>
+                <th>{{ sortable('reservationId', 'ID') }}</th>
+                <th>{{ sortable('clientName', 'Client') }}</th>
+                <th>Project</th>
+                <th>{{ sortable('startTime', 'Start') }}</th>
+                <th>{{ sortable('endTime', 'End') }}</th>
+                <th>{{ sortable('status', 'Status') }}</th>
+                <th>{{ sortable('priority', 'Priority') }}</th>
+                <th>Resources</th>
+                <th>Deposit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reservations %}
+            <tr>
+                <td><a href="/reservation/{{ r.reservationId }}">#{{ r.reservationId }}</a></td>
+                <td><a href="/client/{{ r.clientId }}">{{ r.clientName }}</a></td>
+                <td class="text-muted-sm">
+                    {% if r.projectId %}<a href="/project/{{ r.projectId }}">{{ r.projectName }}</a>{% else %}—{% endif %}
+                </td>
+                <td class="text-muted-sm">{{ r.startTime }}</td>
+                <td class="text-muted-sm">{{ r.endTime }}</td>
+                <td><span class="status-badge {{ status_class(r.status) }}">{{ r.status }}</span></td>
+                <td><span class="chip">{{ r.priority }}</span></td>
+                <td>{{ r.resource_count }}</td>
+                <td class="text-money">${{ '{:,.2f}'.format(r.depositAmount or 0) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

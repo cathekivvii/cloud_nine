@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/projects" class="text-muted-sm">← Projects</a></div>
+
+<div class="mb-4">
+    <h2>{{ project.projectName }}</h2>
+    <div class="text-muted-sm">{{ project.description }}</div>
+    <div class="mt-2">
+        <span class="chip">Owner: <a href="/client/{{ project.clientId }}">{{ project.clientName }}</a></span>
+        {% if project.orgName %}<span class="chip"><a href="/organization/{{ project.orgId }}">{{ project.orgName }}</a></span>{% endif %}
+        <span class="chip">Created {{ project.createdAt }}</span>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Reservations ({{ reservations|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>ID</th><th>Window</th><th>Status</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        {% for r in reservations %}
+                        <tr>
+                            <td><a href="/reservation/{{ r.reservationId }}">#{{ r.reservationId }}</a></td>
+                            <td class="text-muted-sm">{{ r.startTime }} → {{ r.endTime }}</td>
+                            <td><span class="status-badge {{ status_class(r.status) }}">{{ r.status }}</span></td>
+                            <td>{{ r.priority }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted-sm p-3">No reservations.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Deployments ({{ deployments|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Deployment</th><th>Status</th><th>Started</th><th>Stopped</th></tr></thead>
+                    <tbody>
+                        {% for d in deployments %}
+                        <tr>
+                            <td><a href="/deployment/{{ d.deploymentId }}" class="mono">{{ d.deploymentName }}</a></td>
+                            <td><span class="status-badge {{ status_class(d.status) }}">{{ d.status }}</span></td>
+                            <td class="text-muted-sm">{{ d.startedAt }}</td>
+                            <td class="text-muted-sm">{{ d.stoppedAt or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted-sm p-3">No deployments.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from '_components/sortable.html' import sortable %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Invoices</h2>
+    <span class="text-muted-sm">{{ invoices|length }} invoices</span>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+            <option value="All">All statuses</option>
+            <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>pending</option>
+            <option value="paid" {% if request.args.get('status') == 'paid' %}selected{% endif %}>paid</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary btn-sm w-100">Apply</button>
+    </div>
+</form>
+
+<div class="table-scroll-container">
+    <table class="table table-hover table-custom mb-0">
+        <thead>
+            <tr>
+                <th>{{ sortable('invoiceId', 'ID') }}</th>
+                <th>{{ sortable('accountName', 'Account') }}</th>
+                <th>Owner</th>
+                <th>{{ sortable('periodStart', 'Period') }}</th>
+                <th>{{ sortable('totalAmount', 'Amount') }}</th>
+                <th>{{ sortable('status', 'Status') }}</th>
+                <th>Issued</th>
+                <th>{{ sortable('dueAt', 'Due') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in invoices %}
+            <tr>
+                <td><a href="/invoice/{{ i.invoiceId }}">#{{ i.invoiceId }}</a></td>
+                <td><a href="/billing/account/{{ i.billingAccountId }}">{{ i.accountName }}</a></td>
+                <td class="text-muted-sm">{{ i.ownerName }}</td>
+                <td class="text-muted-sm">{{ i.periodStart }} → {{ i.periodEnd }}</td>
+                <td class="text-money">${{ '{:,.2f}'.format(i.totalAmount) }}</td>
+                <td><span class="status-badge {{ status_class(i.status) }}">{{ i.status }}</span></td>
+                <td class="text-muted-sm">{{ i.issuedAt }}</td>
+                <td class="text-muted-sm">{{ i.dueAt }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
