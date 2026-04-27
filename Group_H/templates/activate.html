@@ -1,7 +1,6 @@
-<!-- checked: Checkin verified -->
 {% extends "base.html" %}
 {% block content %}
-<h2>Activate Reservation: {{ resv.guestName }}</h2>
+<h2>Activate Reservation: {{ resv.clientName }}</h2>
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card p-3 mb-3">
@@ -16,8 +15,8 @@
             <div class="alert alert-info">Select an available resource to assign.</div>
             <form>
                 <select class="form-select mb-3">
-                    {% for r in rooms %}
-                    <option value="{{ r.roomId }}">{{ r.roomNumber }} — {{ r.funcName }} (${{ r.baseRate }}/hr)</option>
+                    {% for r in resources %}
+                    <option value="{{ r.resourceId }}">{{ r.serialNum }} — {{ r.typeName }} (${{ r.baseRate }}/hr)</option>
                     {% endfor %}
                 </select>
                 <button class="btn btn-success w-100">Activate Deployment</button>

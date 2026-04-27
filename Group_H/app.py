@@ -1,10 +1,9 @@
 import sqlite3
-import os
 from flask import Flask, render_template, request, redirect, url_for, g
 from datetime import date, timedelta, datetime
 
 app = Flask(__name__)
-DATABASE = os.path.join(app.root_path, 'cloudnine.db')
+DATABASE = "cloudnine.db"
 SYSTEM_DATE = date(2026, 3, 31)
 
 
@@ -46,11 +45,11 @@ def dashboard():
     ).fetchone()[0]
     revenue = round(revenue, 2) if revenue else 0
 
-    arrivals_data = db.execute("""
+    pending_data = db.execute("""
         SELECT r.reservationId as resvId,
-               cl.firstName || ' ' || cl.lastName as guestName,
+               cl.firstName || ' ' || cl.lastName as clientName,
                r.status,
-               COALESCE(res.serialNumber, 'TBD') as roomNumber
+               COALESCE(res.serialNumber, 'TBD') as serialNum
         FROM reservation r
         JOIN client cl ON r.clientId = cl.clientId
         LEFT JOIN reservation_resource rr ON r.reservationId = rr.reservationId
@@ -62,27 +61,27 @@ def dashboard():
     """).fetchall()
 
     kpi_data = {
-        'occupancy': active_rate,
-        'arrivals': new_reservations,
-        'departures': terminations,
+        'active_rate': active_rate,
+        'new_reservations': new_reservations,
+        'terminations': terminations,
         'revenue': revenue
     }
 
-    return render_template('dashboard.html', kpi=kpi_data, arrivals=arrivals_data, active_page='dashboard')
+    return render_template('dashboard.html', kpi=kpi_data, pending=pending_data, active_page='dashboard')
 
 
-@app.route('/rooms')
-def rooms():
+@app.route('/resources')
+def resources():
     db = get_db()
     status_filter = request.args.get('status', 'All')
     search_query = request.args.get('search', '')
 
     sql = """
-        SELECT res.resourceId as roomId, res.serialNumber as roomNumber,
+        SELECT res.resourceId, res.serialNumber as serialNum,
                res.status as currentStatus, res.currentConfig,
-               rt.typeName as funcName, rt.category,
+               rt.typeName, rt.category,
                rt.baseHourlyRate as baseRate, rt.performanceTier,
-               dc.name as wingName, az.zoneName as floorNo,
+               dc.name as datacenterName, az.zoneName,
                reg.regionName
         FROM resource res
         JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
@@ -92,7 +91,7 @@ def rooms():
         WHERE 1=1
     """
     params = []
-    status_map = {'Clean': 'available', 'Dirty': 'maintenance', 'Occupied': 'in-use'}
+    status_map = {'Available': 'available', 'Maintenance': 'maintenance', 'In-Use': 'in-use'}
     if status_filter != 'All':
         sql += " AND res.status = ?"
         params.append(status_map.get(status_filter, status_filter))
@@ -100,36 +99,35 @@ def rooms():
         sql += " AND (res.serialNumber LIKE ? OR dc.name LIKE ? OR az.zoneName LIKE ?)"
         params.extend([f'%{search_query}%'] * 3)
 
-    rooms_data = db.execute(sql, params).fetchall()
-    return render_template('rooms.html', rooms=rooms_data, active_page='rooms')
+    resources_data = db.execute(sql, params).fetchall()
+    return render_template('resources.html', resources=resources_data, active_page='resources')
 
 
-@app.route('/room/<int:room_id>')
-def room_detail(room_id):
+@app.route('/resource/<int:resource_id>')
+def resource_detail(resource_id):
     db = get_db()
 
-    room = db.execute("""
-        SELECT res.resourceId, res.serialNumber as roomNumber, res.status as currentStatus,
+    resource = db.execute("""
+        SELECT res.resourceId, res.serialNumber as serialNum, res.status as currentStatus,
                res.currentConfig, res.commissionedAt,
-               rt.typeName as funcName, rt.category as functionCode,
+               rt.typeName, rt.category,
                rt.baseHourlyRate as baseRate, rt.performanceTier, rt.maxCapacity,
-               dc.name as wingName, dc.city, dc.country,
-               az.zoneName as floorNo, reg.regionName as buildingName,
-               0 as isSmokingRoom
+               dc.name as datacenterName, dc.city, dc.country,
+               az.zoneName, reg.regionName
         FROM resource res
         JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
         JOIN data_center dc ON res.datacenterId = dc.datacenterId
         JOIN availability_zone az ON dc.zoneId = az.zoneId
         JOIN region reg ON az.regionId = reg.regionId
         WHERE res.resourceId = ?
-    """, (room_id,)).fetchone()
+    """, (resource_id,)).fetchone()
 
     components = db.execute("""
         SELECT componentType as name, specs as capacity, status, 1 as count
         FROM resource_component
         WHERE parentResourceId = ?
         ORDER BY componentId
-    """, (room_id,)).fetchall()
+    """, (resource_id,)).fetchall()
 
     maintenance = db.execute("""
         SELECT ml.maintenanceId as ticketId,
@@ -139,34 +137,34 @@ def room_detail(room_id):
         FROM maintenanceLog ml
         WHERE ml.resourceId = ?
         ORDER BY ml.scheduledStart DESC
-    """, (room_id,)).fetchall()
+    """, (resource_id,)).fetchall()
 
     history = db.execute("""
-        SELECT dr.allocatedAt as checkInTime, dr.deallocatedAt as checkOutTime,
-               cl.firstName || ' ' || cl.lastName as guestName
+        SELECT dr.allocatedAt, dr.deallocatedAt,
+               cl.firstName || ' ' || cl.lastName as clientName
         FROM deployment_resource dr
         JOIN deployment d ON dr.deploymentId = d.deploymentId
         JOIN reservation r ON d.reservationId = r.reservationId
         JOIN client cl ON r.clientId = cl.clientId
         WHERE dr.resourceId = ?
         ORDER BY dr.allocatedAt DESC
-    """, (room_id,)).fetchall()
+    """, (resource_id,)).fetchall()
 
     adjacencies = db.execute("""
-        SELECT res2.resourceId as roomId, res2.serialNumber as roomNumber,
-               rt2.typeName as connectionType
+        SELECT res2.resourceId, res2.serialNumber as serialNum,
+               rt2.typeName
         FROM resource res1
         JOIN resource res2 ON res1.datacenterId = res2.datacenterId
             AND res2.resourceId != res1.resourceId
         JOIN resource_type rt2 ON res2.resourceTypeId = rt2.resourceTypeId
         WHERE res1.resourceId = ?
         LIMIT 5
-    """, (room_id,)).fetchall()
+    """, (resource_id,)).fetchall()
 
-    return render_template('room_detail.html',
-                           room=room, beds=components, fixtures=[],
+    return render_template('resource_detail.html',
+                           resource=resource, components=components,
                            adjacencies=adjacencies, maintenance=maintenance, history=history,
-                           active_page='rooms')
+                           active_page='resources')
 
 
 @app.route('/reservations')
@@ -216,9 +214,9 @@ def reservations():
 def new_reservation():
     db = get_db()
     if request.method == 'POST':
-        guest_mode = request.form.get('guest_mode')
+        client_mode = request.form.get('client_mode')
         client_id = None
-        if guest_mode == 'new':
+        if client_mode == 'new':
             first_name = request.form.get('first_name')
             last_name = request.form.get('last_name')
             email = request.form.get('email')
@@ -240,32 +238,32 @@ def new_reservation():
         db.commit()
         return redirect(url_for('reservations'))
 
-    parties = db.execute("""
+    clients = db.execute("""
         SELECT clientId as partyId, firstName || ' ' || lastName as name
         FROM client ORDER BY firstName
     """).fetchall()
-    return render_template('reservation_new.html', parties=parties, active_page='reservations')
+    return render_template('reservation_new.html', parties=clients, active_page='reservations')
 
 
-@app.route('/checkin/<int:resv_id>')
-def checkin(resv_id):
+@app.route('/activate/<int:resv_id>')
+def activate(resv_id):
     db = get_db()
     resv = db.execute("""
         SELECT r.reservationId as resvId, r.startTime as startDate, r.endTime as endDate,
-               cl.firstName || ' ' || cl.lastName as guestName
+               cl.firstName || ' ' || cl.lastName as clientName
         FROM reservation r
         JOIN client cl ON r.clientId = cl.clientId
         WHERE r.reservationId = ?
     """, (resv_id,)).fetchone()
-    available_rooms = db.execute("""
-        SELECT res.resourceId as roomId, res.serialNumber as roomNumber,
-               rt.typeName as funcName, res.status as currentStatus,
+    available_resources = db.execute("""
+        SELECT res.resourceId, res.serialNumber as serialNum,
+               rt.typeName, res.status as currentStatus,
                rt.baseHourlyRate as baseRate
         FROM resource res
         JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
         WHERE res.status = 'available'
     """).fetchall()
-    return render_template('checkin.html', resv=resv, rooms=available_rooms, active_page='reservations')
+    return render_template('activate.html', resv=resv, resources=available_resources, active_page='reservations')
 
 
 @app.route('/parties')
@@ -316,7 +314,7 @@ def events():
         SELECT d.deploymentName as name, d.status, d.priority,
                d.startedAt as startDate, d.stoppedAt as endDate,
                cl.firstName || ' ' || cl.lastName as orgName,
-               COALESCE(res.serialNumber, 'Multi-resource') as roomNumber,
+               COALESCE(res.serialNumber, 'Multi-resource') as serialNum,
                COALESCE(p.projectName, '') as description
         FROM deployment d
         JOIN reservation r ON d.reservationId = r.reservationId
@@ -354,7 +352,7 @@ def reports():
     report_revenuetop10 = db.execute("""
         SELECT cl.clientId as partyId,
                cl.firstName || ' ' || cl.lastName as partyName,
-               COUNT(DISTINCT d.deploymentId) as stays,
+               COUNT(DISTINCT d.deploymentId) as deployments,
                ROUND(SUM(c.amount), 2) as totalSpent
         FROM client cl
         JOIN reservation r ON cl.clientId = r.clientId
@@ -366,9 +364,9 @@ def reports():
     """).fetchall()
 
     report_util = db.execute("""
-        SELECT rt.typeName as room_type,
-               COUNT(DISTINCT res.resourceId) as total_rooms,
-               SUM(CASE WHEN res.status = 'in-use' THEN 1 ELSE 0 END) as occupied_count
+        SELECT rt.typeName as resource_type,
+               COUNT(DISTINCT res.resourceId) as total_resources,
+               SUM(CASE WHEN res.status = 'in-use' THEN 1 ELSE 0 END) as active_count
         FROM resource res
         JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
         GROUP BY rt.typeName
@@ -409,19 +407,19 @@ def reports():
         GROUP BY party_type
     """).fetchall()
 
-    report_average_stay = db.execute("""
-        SELECT rt.typeName as room_type,
+    report_avg_duration = db.execute("""
+        SELECT rt.typeName as resource_type,
                ROUND(AVG(
                    julianday(COALESCE(d.stoppedAt, '2026-03-31')) - julianday(d.startedAt)
-               ), 1) as avg_stay
+               ), 1) as avg_duration
         FROM deployment d
         JOIN deployment_resource dr ON d.deploymentId = dr.deploymentId
         JOIN resource res ON dr.resourceId = res.resourceId
         JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
-        GROUP BY rt.typeName ORDER BY avg_stay DESC
+        GROUP BY rt.typeName ORDER BY avg_duration DESC
     """).fetchall()
 
-    report_peak_occupancy = db.execute("""
+    report_peak_demand = db.execute("""
         SELECT strftime('%w', startTime) AS weekday, COUNT(*) AS reservations
         FROM reservation WHERE status != 'cancelled'
         GROUP BY weekday ORDER BY weekday
@@ -458,8 +456,8 @@ def reports():
                            report_util=report_util, report_monthly=report_monthly,
                            report_service=report_service, report_cancel=report_cancel,
                            report_demographics=report_demographics,
-                           report_average_stay=report_average_stay,
-                           report_peak_occupancy=report_peak_occupancy,
+                           report_avg_duration=report_avg_duration,
+                           report_peak_demand=report_peak_demand,
                            c1_labels=c1_labels, c1_data=c1_data,
                            c2_labels=c2_labels, c2_data=c2_data,
                            c3_labels=c3_labels, c3_data=c3_data,

@@ -220,19 +220,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: bold;
 }
 
-/* ============ room detail ============ */
+/* ============ resource detail ============ */
 .bg-gold {
     background: var(--primary-gold);
-}
-
-/* Amenities 金边卡片悬停效果 */
-.amenity-card {
-    transition: all 0.35s ease;
-    cursor: default;
-}
-.amenity-card:hover {
-    background: var(--primary-gold) !important;
-    color: black !important;
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(197, 160, 89, 0.35);
 }

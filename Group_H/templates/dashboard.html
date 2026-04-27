@@ -6,9 +6,9 @@
 </div>
 
 <div class="row mb-5">
-    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">Active Deployments</div><div class="kpi-value">{{ kpi.occupancy }}%</div></div></div>
-    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">New Reservations</div><div class="kpi-value">{{ kpi.arrivals }}</div></div></div>
-    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">Terminations</div><div class="kpi-value">{{ kpi.departures }}</div></div></div>
+    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">Active Deployments</div><div class="kpi-value">{{ kpi.active_rate }}%</div></div></div>
+    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">New Reservations</div><div class="kpi-value">{{ kpi.new_reservations }}</div></div></div>
+    <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">Terminations</div><div class="kpi-value">{{ kpi.terminations }}</div></div></div>
     <div class="col-md-3"><div class="card kpi-card"><div class="kpi-label">Revenue Today</div><div class="kpi-value">${{ kpi.revenue }}</div></div></div>
 </div>
 
@@ -21,16 +21,16 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light"><tr><th>Resv ID</th><th>Client</th><th>Status</th><th>Resource</th><th>Action</th></tr></thead>
                 <tbody>
-                    {% for item in arrivals %}
+                    {% for item in pending %}
                     <tr>
                         <td>#{{ item.resvId }}</td>
-                        <td><strong>{{ item.guestName }}</strong></td>
+                        <td><strong>{{ item.clientName }}</strong></td>
                         <td><span class="badge bg-warning text-dark rounded-0">Due In</span></td>
-                        <td>{{ item.roomNumber if item.roomNumber else 'Unassigned' }}</td>
-                        <td><a href="/checkin/{{ item.resvId }}" class="btn btn-sm btn-outline-dark py-0">Activate</a></td>
+                        <td>{{ item.serialNum if item.serialNum else 'Unassigned' }}</td>
+                        <td><a href="/activate/{{ item.resvId }}" class="btn btn-sm btn-outline-dark py-0">Activate</a></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-center p-3">No arrivals for today.</td></tr>
+                    <tr><td colspan="5" class="text-center p-3">No pending reservations.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -42,7 +42,7 @@
             <h5 class="mb-3">Quick Actions</h5>
             <div class="d-grid gap-3">
                 <a href="/reservations/new" class="btn btn-primary py-3">New Reservation</a>
-                <a href="/rooms?status=Clean" class="btn btn-outline-dark py-3">View Available Resources</a>
+                <a href="/resources?status=Available" class="btn btn-outline-dark py-3">View Available Resources</a>
                 <a href="/events" class="btn btn-outline-dark py-3">Deployments</a>
             </div>
         </div>

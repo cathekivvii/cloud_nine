@@ -14,7 +14,6 @@
                 <input type="text" name="search" class="form-control" placeholder="Client Name, ID or Org..." value="{{ request.args.get('search', '') }}">
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
-            <!-- Updated button style to match Room Management -->
             <a href="/reservations/new" class="btn btn-primary text-nowrap">+ New</a>
         </div>
     </div>
@@ -31,10 +30,10 @@
                     {{ sortable("Client / Party", "displayName") }}
                 </th>
                 <th class="text-nowrap">
-                    {{ sortable("Check In", "checkIn") }}
+                    {{ sortable("Start Date", "startDate") }}
                 </th>
                 <th class="text-nowrap">
-                    {{ sortable("Check Out", "checkOut") }}
+                    {{ sortable("End Date", "endDate") }}
                 </th>
                 <th class="text-nowrap" style="width: 1%;">
                     {{ sortable("Status", "status") }}
@@ -62,7 +61,7 @@
                 </td>
                 <td class="text-nowrap">
                     {% if r.status == 'Booked' %}
-                    <a href="/checkin/{{ r.resvId }}" class="btn btn-sm btn-outline-dark rounded-0 py-0" style="font-size: 0.75rem;">Activate</a>
+                    <a href="/activate/{{ r.resvId }}" class="btn btn-sm btn-outline-dark rounded-0 py-0" style="font-size: 0.75rem;">Activate</a>
                     {% endif %}
                 </td>
             </tr>

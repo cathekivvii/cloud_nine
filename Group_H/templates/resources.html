@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-5">
+        <h2>Resources <small class="text-muted">({{ resources|length }})</small></h2>
+    </div>
+    <div class="col-md-7">
+        <form action="/resources" method="get" class="d-flex gap-2 justify-content-end">
+            <input type="text" name="search" class="form-control rounded-0" placeholder="Search Serial Number or Zone..." value="{{ request.args.get('search', '') }}">
+
+            <select name="status" class="form-select w-auto rounded-0" onchange="this.form.submit()">
+                <option value="All">All Statuses</option>
+                <option value="Available" {% if request.args.get('status') == 'Available' %}selected{% endif %}>Available</option>
+                <option value="Maintenance" {% if request.args.get('status') == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+                <option value="In-Use" {% if request.args.get('status') == 'In-Use' %}selected{% endif %}>In Use</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if request.args.get('search') or request.args.get('status') != 'All' %}
+            <a href="/resources" class="btn btn-outline-secondary rounded-0">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="table-scroll-container card rounded-0 border-0 shadow-sm">
+    <table class="table table-custom align-middle mb-0">
+        <thead>
+            <tr>
+                <th class="text-nowrap" style="width: 1%;">Serial Number</th>
+                <th>Data Center / Zone</th>
+                <th>Resource Type</th>
+                <th class="text-nowrap">Rate/hr</th>
+                <th class="text-nowrap text-center" style="width: 1%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resource in resources %}
+            <tr>
+                <td class="text-nowrap">
+                    <a href="/resource/{{ resource.resourceId }}" class="text-decoration-none fw-bold fs-5 text-dark" style="font-family: 'Cinzel', serif;">{{ resource.serialNum }}</a>
+                </td>
+                <td>{{ resource.datacenterName }} <span class="text-muted">/</span> {{ resource.zoneName }}</td>
+                <td>{{ resource.typeName }}</td>
+                <td class="text-nowrap fw-bold" style="color: var(--primary-gold); font-family: monospace;">${{ resource.baseRate }}</td>
+                <td class="text-nowrap text-center">
+                    <span class="status-badge {% if resource.currentStatus=='available' %}status-clean{% elif resource.currentStatus=='in-use' %}status-occupied{% else %}status-dirty{% endif %}">
+                        {{ resource.currentStatus }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-2 text-muted small text-end">Scroll to view more resources ↕</div>
+{% endblock %}
