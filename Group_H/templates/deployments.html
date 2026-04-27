@@ -10,6 +10,7 @@
     <table class="table mb-0">
         <thead class="bg-dark-blue text-white">
             <tr>
+                <th class="text-nowrap" style="width: 1%;">ID</th>
                 <th>Deployment</th>
                 <th>Description</th>
                 <th class="text-nowrap">Client / Org</th>
@@ -21,7 +22,8 @@
         <tbody>
             {% for e in events %}
             <tr>
-                <td><strong>{{ e.name }}</strong></td>
+                <td class="text-nowrap text-muted small">#{{ e.deploymentId }}</td>
+                <td><a href="/deployment/{{ e.deploymentId }}" class="fw-bold text-dark text-decoration-none">{{ e.name }}</a></td>
                 <td><small class="text-muted">{{ e.description }}</small></td>
                 <td>{{ e.orgName }}</td>
                 <td>{{ e.serialNum }}</td>
@@ -29,7 +31,7 @@
                 <td class="text-nowrap">{{ e.endDate }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center p-3">No upcoming events found.</td></tr>
+            <tr><td colspan="7" class="text-center p-3">No deployments found.</td></tr>
             {% endfor %}
         </tbody>
     </table>

@@ -307,11 +307,11 @@ def parties():
     return render_template('parties.html', parties=parties_list, active_page='parties')
 
 
-@app.route('/events')
-def events():
+@app.route('/deployments')
+def deployments():
     db = get_db()
     events_list = db.execute("""
-        SELECT d.deploymentName as name, d.status, d.priority,
+        SELECT d.deploymentId, d.deploymentName as name, d.status, d.priority,
                d.startedAt as startDate, d.stoppedAt as endDate,
                cl.firstName || ' ' || cl.lastName as orgName,
                COALESCE(res.serialNumber, 'Multi-resource') as serialNum,
@@ -326,7 +326,58 @@ def events():
         GROUP BY d.deploymentId
         ORDER BY d.startedAt DESC
     """).fetchall()
-    return render_template('events.html', events=events_list, active_page='events')
+    return render_template('deployments.html', events=events_list, active_page='deployments')
+
+
+@app.route('/deployment/<int:deployment_id>')
+def deployment_detail(deployment_id):
+    db = get_db()
+
+    deployment = db.execute("""
+        SELECT d.deploymentId, d.deploymentName, d.status, d.priority,
+               d.startedAt, d.stoppedAt, d.autoScale,
+               cl.firstName || ' ' || cl.lastName as clientName,
+               COALESCE(p.projectName, '—') as projectName,
+               r.reservationId
+        FROM deployment d
+        JOIN reservation r ON d.reservationId = r.reservationId
+        JOIN client cl ON r.clientId = cl.clientId
+        LEFT JOIN project p ON d.projectId = p.projectId
+        WHERE d.deploymentId = ?
+    """, (deployment_id,)).fetchone()
+
+    resources = db.execute("""
+        SELECT res.serialNumber as serialNum, rt.typeName,
+               dr.allocatedAt, dr.deallocatedAt, dr.usageHours
+        FROM deployment_resource dr
+        JOIN resource res ON dr.resourceId = res.resourceId
+        JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
+        WHERE dr.deploymentId = ?
+        ORDER BY dr.allocatedAt
+    """, (deployment_id,)).fetchall()
+
+    scaling = db.execute("""
+        SELECT se.eventType, se.previousScale, se.newScale, se.triggeredAt,
+               COALESCE(s.name, 'Auto') as triggeredBy
+        FROM scaling_event se
+        LEFT JOIN staff s ON se.staffId = s.staffId
+        WHERE se.deploymentId = ?
+        ORDER BY se.triggeredAt DESC
+    """, (deployment_id,)).fetchall()
+
+    charges = db.execute("""
+        SELECT st.serviceName, ROUND(c.amount, 2) as amount,
+               c.chargedAt, c.isProvisional
+        FROM charge c
+        JOIN service_type st ON c.serviceTypeId = st.serviceTypeId
+        WHERE c.deploymentId = ?
+        ORDER BY c.chargedAt DESC
+    """, (deployment_id,)).fetchall()
+
+    return render_template('deployment_detail.html',
+                           deployment=deployment, resources=resources,
+                           scaling=scaling, charges=charges,
+                           active_page='deployments')
 
 
 @app.route('/billing')
