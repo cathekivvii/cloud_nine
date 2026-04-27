@@ -335,7 +335,9 @@ def billing():
     accounts = db.execute("""
         SELECT ba.billingAccountId as accountId, ba.status, ba.accountName,
                COALESCE(o.orgName, cl.firstName || ' ' || cl.lastName) as responsibleParty,
-               ROUND(SUM(c.amount), 2) as total_balance
+               ba.accountName,
+               ROUND(SUM(CASE WHEN c.isProvisional = 1 THEN c.amount ELSE 0 END), 2) as accruing_balance,
+               ROUND(SUM(CASE WHEN c.isProvisional = 0 THEN c.amount ELSE 0 END), 2) as finalized_balance
         FROM billing_account ba
         LEFT JOIN organization o ON ba.orgId = o.orgId
         LEFT JOIN client cl ON ba.clientId = cl.clientId

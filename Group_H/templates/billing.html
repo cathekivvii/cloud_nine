@@ -11,8 +11,10 @@
             <tr>
                 <th class="text-nowrap" style="width: 1%;">Account ID</th>
                 <th>Responsible Party</th>
+                <th>Account Name</th>
                 <th class="text-nowrap" style="width: 1%;">Status</th>
-                <th class="text-nowrap text-end">Total Balance</th>
+                <th class="text-nowrap text-end">Accruing</th>
+                <th class="text-nowrap text-end">Finalized</th>
             </tr>
         </thead>
         <tbody>
@@ -20,13 +22,17 @@
             <tr>
                 <td class="text-nowrap text-muted">#{{ a.accountId }}</td>
                 <td><strong>{{ a.responsibleParty }}</strong></td>
+                <td>{{ a.accountName }}</td>
                 <td class="text-nowrap">
-                    <span class="badge rounded-0 {% if a.status == 'Open' %}bg-success{% else %}bg-secondary{% endif %}">
+                    <span class="badge rounded-0 {% if a.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
                         {{ a.status }}
                     </span>
                 </td>
-                <td class="text-nowrap text-end fw-bold" style="font-family: monospace; font-size: 1rem;">
-                    ${{ a.total_balance if a.total_balance else 0 }}
+                <td class="text-nowrap text-end" style="font-family: monospace; color: #e67e22;">
+                    ${{ a.accruing_balance if a.accruing_balance else '0.00' }}
+                </td>
+                <td class="text-nowrap text-end fw-bold" style="font-family: monospace;">
+                    ${{ a.finalized_balance if a.finalized_balance else '0.00' }}
                 </td>
             </tr>
             {% endfor %}
