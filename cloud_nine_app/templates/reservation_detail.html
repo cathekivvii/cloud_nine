@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/reservations" class="text-muted-sm">← Reservations</a></div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>Reservation #{{ resv.reservationId }}</h2>
+        <div class="text-muted-sm">
+            {{ resv.startTime }} → {{ resv.endTime }}
+        </div>
+        <div class="mt-2">
+            <span class="status-badge {{ status_class(resv.status) }}">{{ resv.status }}</span>
+            <span class="chip">{{ resv.priority }} priority</span>
+        </div>
+    </div>
+    <div class="text-end">
+        <div class="text-muted-sm">Deposit</div>
+        <div class="kpi-value text-money">${{ '{:,.2f}'.format(resv.depositAmount or 0) }}</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Client</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    <div><a href="/client/{{ resv.clientId }}"><strong>{{ resv.clientName }}</strong></a></div>
+                    <div class="text-muted-sm">{{ resv.clientEmail }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Project</div>
+            <div class="card-body">
+                <div class="card-body-content">
+                    {% if resv.projectId %}
+                    <a href="/project/{{ resv.projectId }}"><strong>{{ resv.projectName }}</strong></a>
+                    {% else %}
+                    <span class="text-muted-sm">No project tied to this reservation.</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Reserved Resources ({{ res_resources|length }})</div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead><tr><th>Serial #</th><th>Type</th><th>Data Center</th><th>Status</th><th>Requested Config</th><th>Assigned</th></tr></thead>
+            <tbody>
+                {% for rr in res_resources %}
+                <tr>
+                    <td class="mono"><a href="/resource/{{ rr.resourceId }}">{{ rr.serialNumber }}</a></td>
+                    <td>{{ rr.typeName }}</td>
+                    <td class="text-muted-sm">{{ rr.datacenterName }}</td>
+                    <td><span class="status-badge {{ status_class(rr.resStatus) }}">{{ rr.resStatus }}</span></td>
+                    <td class="mono text-muted-sm">{{ rr.requestedConfig or '—' }}</td>
+                    <td class="text-muted-sm">{{ rr.assignedAt or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-muted-sm p-3">No resources reserved.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Derived Deployments ({{ deployments|length }})</div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead><tr><th>Name</th><th>Status</th><th>Started</th><th>Stopped</th><th></th></tr></thead>
+            <tbody>
+                {% for d in deployments %}
+                <tr>
+                    <td class="mono">{{ d.deploymentName }}</td>
+                    <td><span class="status-badge {{ status_class(d.status) }}">{{ d.status }}</span></td>
+                    <td class="text-muted-sm">{{ d.startedAt }}</td>
+                    <td class="text-muted-sm">{{ d.stoppedAt or '—' }}</td>
+                    <td><a href="/deployment/{{ d.deploymentId }}" class="btn btn-sm btn-outline-dark">View</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted-sm p-3">No deployments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

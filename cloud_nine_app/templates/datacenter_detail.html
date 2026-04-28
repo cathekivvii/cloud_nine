@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="mb-2"><a href="/infrastructure" class="text-muted-sm">← Infrastructure</a></div>
+
+<div class="resource-hero mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2>{{ dc.name }}</h2>
+            <div class="mono">{{ dc.city }}, {{ dc.country }}</div>
+            <div class="mt-2">
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">{{ dc.regionName }}</span>
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">{{ dc.zoneName }}</span>
+                <span class="chip" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3)">{{ dc.redundancyLevel }}</span>
+            </div>
+        </div>
+        <span class="status-badge {{ status_class(dc.status) }}">{{ dc.status }}</span>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Hosted Resources ({{ resources|length }})</div>
+    <div class="card-body">
+        <div class="table-scroll-container">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr><th>Serial #</th><th>Type</th><th>Tier</th><th>Status</th><th>Commissioned</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for r in resources %}
+                    <tr>
+                        <td class="mono">{{ r.serialNumber }}</td>
+                        <td>{{ r.typeName }}</td>
+                        <td>{{ r.performanceTier }}</td>
+                        <td><span class="status-badge {{ status_class(r.status) }}">{{ r.status }}</span></td>
+                        <td class="text-muted-sm">{{ r.commissionedAt }}</td>
+                        <td><a href="/resource/{{ r.resourceId }}" class="btn btn-sm btn-outline-dark">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Recent Maintenance</div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Resource</th><th>Type</th><th>Scheduled</th><th>Actual End</th><th>Staff</th></tr>
+            </thead>
+            <tbody>
+                {% for m in maintenance %}
+                <tr>
+                    <td class="mono">{{ m.serialNumber }}</td>
+                    <td>{{ m.maintenanceType }}</td>
+                    <td class="text-muted-sm">{{ m.scheduledStart }} → {{ m.scheduledEnd }}</td>
+                    <td class="text-muted-sm">{{ m.actualEnd or '—' }}</td>
+                    <td>{{ m.staffName }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted-sm p-3">No maintenance recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

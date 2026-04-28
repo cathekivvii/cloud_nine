@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% from '_components/sortable.html' import sortable %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Clients</h2>
+    <span class="text-muted-sm">{{ clients|length }} matching</span>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name / email / org"
+               value="{{ request.args.get('search', '') }}">
+    </div>
+    <div class="col-md-2">
+        <select name="type" class="form-select form-select-sm">
+            <option value="All">All types</option>
+            {% for t in types %}
+            <option value="{{ t.clientType }}" {% if request.args.get('type') == t.clientType %}selected{% endif %}>{{ t.clientType }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary btn-sm w-100">Apply</button>
+    </div>
+</form>
+
+<div class="table-scroll-container">
+    <table class="table table-hover table-custom mb-0">
+        <thead>
+            <tr>
+                <th>{{ sortable('clientId', 'ID') }}</th>
+                <th>{{ sortable('lastName', 'Name') }}</th>
+                <th>{{ sortable('email', 'Email') }}</th>
+                <th>Role</th>
+                <th>{{ sortable('clientType', 'Type') }}</th>
+                <th>{{ sortable('org', 'Organization') }}</th>
+                <th>{{ sortable('team', 'Team') }}</th>
+                <th>Projects</th>
+                <th>Reservations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in clients %}
+            <tr>
+                <td>{{ c.clientId }}</td>
+                <td><a href="/client/{{ c.clientId }}"><strong>{{ c.firstName }} {{ c.lastName }}</strong></a></td>
+                <td class="text-muted-sm">{{ c.email }}</td>
+                <td>{{ c.role or '—' }}</td>
+                <td><span class="chip">{{ c.clientType }}</span></td>
+                <td>{% if c.orgId %}<a href="/organization/{{ c.orgId }}">{{ c.orgName }}</a>{% else %}—{% endif %}</td>
+                <td class="text-muted-sm">{{ c.teamName or '—' }}</td>
+                <td>{{ c.project_count }}</td>
+                <td>{{ c.resv_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="mb-3">Search</h2>
+
+<form method="get" class="mb-4">
+    <div class="input-group input-group-lg">
+        <input type="text" name="q" class="form-control" placeholder="Search resources, clients, organizations, deployments…"
+               value="{{ q }}" autofocus>
+        <button class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+{% if not q %}
+<p class="text-muted-sm">Type a query above to search across resources (serial #), clients (name/email), organizations, and deployments.</p>
+{% else %}
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Resources ({{ resources|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Serial</th><th>Type</th><th>DC</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for r in resources %}
+                        <tr>
+                            <td class="mono"><a href="/resource/{{ r.resourceId }}">{{ r.serialNumber }}</a></td>
+                            <td>{{ r.typeName }}</td>
+                            <td class="text-muted-sm">{{ r.datacenterName }}</td>
+                            <td><span class="status-badge {{ status_class(r.status) }}">{{ r.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted-sm p-3">No matches.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Clients ({{ clients|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Name</th><th>Email</th><th>Org</th></tr></thead>
+                    <tbody>
+                        {% for c in clients %}
+                        <tr>
+                            <td><a href="/client/{{ c.clientId }}">{{ c.firstName }} {{ c.lastName }}</a></td>
+                            <td class="text-muted-sm">{{ c.email }}</td>
+                            <td class="text-muted-sm">{{ c.orgName or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted-sm p-3">No matches.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Organizations ({{ orgs|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Name</th><th>Industry</th><th>Contact</th></tr></thead>
+                    <tbody>
+                        {% for o in orgs %}
+                        <tr>
+                            <td><a href="/organization/{{ o.orgId }}">{{ o.orgName }}</a></td>
+                            <td>{{ o.industry }}</td>
+                            <td class="text-muted-sm">{{ o.contactEmail }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted-sm p-3">No matches.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Deployments ({{ deployments|length }})</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Name</th><th>Status</th><th>Client</th><th>Started</th></tr></thead>
+                    <tbody>
+                        {% for d in deployments %}
+                        <tr>
+                            <td class="mono"><a href="/deployment/{{ d.deploymentId }}">{{ d.deploymentName }}</a></td>
+                            <td><span class="status-badge {{ status_class(d.status) }}">{{ d.status }}</span></td>
+                            <td>{{ d.clientName }}</td>
+                            <td class="text-muted-sm">{{ d.startedAt }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted-sm p-3">No matches.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

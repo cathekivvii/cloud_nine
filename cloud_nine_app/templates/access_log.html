@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Access Log</h2>
+    <span class="text-muted-sm">{{ logs|length }} entries (latest 200)</span>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-3">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search client / serial / IP"
+               value="{{ request.args.get('search', '') }}">
+    </div>
+    <div class="col-md-2">
+        <select name="action" class="form-select form-select-sm">
+            <option value="All">All actions</option>
+            {% for a in actions %}
+            <option value="{{ a.action }}" {% if request.args.get('action') == a.action %}selected{% endif %}>{{ a.action }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary btn-sm w-100">Apply</button>
+    </div>
+</form>
+
+<div class="table-scroll-container">
+    <table class="table table-hover table-custom mb-0">
+        <thead>
+            <tr><th>When</th><th>Client</th><th>Resource</th><th>Deployment</th><th>Action</th><th>IP</th></tr>
+        </thead>
+        <tbody>
+            {% for l in logs %}
+            <tr>
+                <td class="text-muted-sm">{{ l.loggedAt }}</td>
+                <td><a href="/client/{{ l.clientId }}">{{ l.clientName }}</a></td>
+                <td class="mono"><a href="/resource/{{ l.resourceId }}">{{ l.serialNumber }}</a></td>
+                <td class="mono">{% if l.deploymentId %}<a href="/deployment/{{ l.deploymentId }}">{{ l.deploymentName }}</a>{% else %}—{% endif %}</td>
+                <td><span class="chip">{{ l.action }}</span></td>
+                <td class="mono text-muted-sm">{{ l.ipAddress }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

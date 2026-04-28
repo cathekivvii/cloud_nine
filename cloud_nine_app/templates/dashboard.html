@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md">
+        <div class="kpi-card">
+            <div class="kpi-label">Fleet Utilization</div>
+            <div class="kpi-value">{{ kpi.utilization }}%</div>
+            <div class="kpi-sub">{{ kpi.in_use }} of {{ kpi.total_resources }} resources in-use</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="kpi-card">
+            <div class="kpi-label">Active Deployments</div>
+            <div class="kpi-value">{{ kpi.active_deployments }}</div>
+            <div class="kpi-sub">{{ kpi.total_deployments }} total ever</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="kpi-card">
+            <div class="kpi-label">MTD Revenue</div>
+            <div class="kpi-value text-money">${{ '{:,.2f}'.format(kpi.mtd_revenue) }}</div>
+            <div class="kpi-sub">since month start</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="kpi-card">
+            <div class="kpi-label">Outstanding</div>
+            <div class="kpi-value text-money">${{ '{:,.2f}'.format(kpi.outstanding) }}</div>
+            <div class="kpi-sub">unpaid invoices</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="kpi-card">
+            <div class="kpi-label">Active Orgs</div>
+            <div class="kpi-value">{{ kpi.active_orgs }}</div>
+            <div class="kpi-sub">customer organizations</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Active Deployments</span>
+                <a href="/deployments" class="btn btn-sm btn-outline-dark">View all</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Deployment</th>
+                                <th>Client</th>
+                                <th>Project</th>
+                                <th>Priority</th>
+                                <th>Started</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in deployments %}
+                            <tr>
+                                <td><a href="/deployment/{{ d.deploymentId }}" class="mono">{{ d.deploymentName }}</a></td>
+                                <td>{{ d.clientName }}</td>
+                                <td class="text-muted-sm">{{ d.projectName or '—' }}</td>
+                                <td><span class="status-badge {{ status_class(d.priority) }}">{{ d.priority }}</span></td>
+                                <td class="text-muted-sm">{{ d.startedAt }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-muted-sm p-3">No active deployments.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header">Recent Maintenance</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr><th>Resource</th><th>Type</th><th>Staff</th><th>When</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for m in maintenance %}
+                            <tr>
+                                <td class="mono">{{ m.serialNumber }}</td>
+                                <td>{{ m.maintenanceType }}</td>
+                                <td class="text-muted-sm">{{ m.staffName }}</td>
+                                <td class="text-muted-sm">{{ m.scheduledStart }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-muted-sm p-3">No recent maintenance.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Recent Scaling</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr><th>Deployment</th><th>Event</th><th>Scale</th><th>When</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for s in scaling %}
+                            <tr>
+                                <td class="mono">{{ s.deploymentName }}</td>
+                                <td>{{ s.eventType }}</td>
+                                <td class="text-muted-sm">{{ s.previousScale }} → {{ s.newScale }}</td>
+                                <td class="text-muted-sm">{{ s.triggeredAt }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-muted-sm p-3">No scaling events.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-muted-sm mt-4 text-end">System date: {{ system_date }}</div>
+
+{% endblock %}

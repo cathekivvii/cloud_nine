@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Reports</h2>
+    <span class="text-muted-sm">Snapshot as of {{ system_date }}</span>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span>Monthly Revenue</span>
+                <span class="text-muted-sm">
+                    Trend:
+                    {% if trend_direction == 'up' %}<span class="status-badge status-good">▲ up</span>
+                    {% elif trend_direction == 'down' %}<span class="status-badge status-bad">▼ down</span>
+                    {% else %}<span class="status-badge status-neutral">flat</span>{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="card-body-content"><canvas id="chartRevenue" height="180"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Resource Utilization by Type (%)</div>
+            <div class="card-body">
+                <div class="card-body-content"><canvas id="chartUtil" height="180"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Revenue by Service Type</div>
+            <div class="card-body">
+                <div class="card-body-content"><canvas id="chartService" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Revenue by Region</div>
+            <div class="card-body">
+                <div class="card-body-content"><canvas id="chartRegion" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Top 10 Clients by Spend</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Client</th><th>Org</th><th>Deploys</th><th>Spend</th></tr></thead>
+                    <tbody>
+                        {% for c in top_clients %}
+                        <tr>
+                            <td><a href="/client/{{ c.clientId }}">{{ c.clientName }}</a></td>
+                            <td class="text-muted-sm">{{ c.orgName or '—' }}</td>
+                            <td>{{ c.deploys }}</td>
+                            <td class="text-money">${{ '{:,.2f}'.format(c.total_spend) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Avg Deployment Duration by Resource Type</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Type</th><th>Deployments</th><th>Avg Hours</th></tr></thead>
+                    <tbody>
+                        {% for r in avg_duration %}
+                        <tr>
+                            <td>{{ r.typeName }}</td>
+                            <td>{{ r.deploys }}</td>
+                            <td class="text-muted-sm">{{ r.avg_hours or 0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Outstanding Invoices</div>
+            <div class="card-body">
+                <div class="table-scroll-container" style="max-height:380px;">
+                    <table class="table mb-0">
+                        <thead><tr><th>ID</th><th>Account</th><th>Owner</th><th>Total</th><th>Due</th></tr></thead>
+                        <tbody>
+                            {% for i in outstanding_invoices %}
+                            <tr>
+                                <td><a href="/invoice/{{ i.invoiceId }}">#{{ i.invoiceId }}</a></td>
+                                <td class="text-muted-sm">{{ i.accountName }}</td>
+                                <td class="text-muted-sm">{{ i.ownerName }}</td>
+                                <td class="text-money">${{ '{:,.2f}'.format(i.totalAmount) }}</td>
+                                <td class="text-muted-sm">{{ i.dueAt }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-muted-sm p-3">All invoices paid.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Credits vs Surcharges</div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead><tr><th>Month</th><th>Type</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for a in adjustments %}
+                        <tr>
+                            <td>{{ a.month }}</td>
+                            <td><span class="chip">{{ a.adjustmentType }}</span></td>
+                            <td class="text-money">${{ '{:,.2f}'.format(a.total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted-sm p-3">No adjustments.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const palette = ['#2b6cb0', '#38b2ac', '#d69e2e', '#c53030', '#3182ce', '#2f855a', '#718096', '#9f7aea'];
+
+new Chart(document.getElementById('chartRevenue'), {
+    type: 'line',
+    data: {
+        labels: {{ c1_labels | tojson }},
+        datasets: [{
+            label: 'Revenue ($)',
+            data: {{ c1_data | tojson }},
+            borderColor: '#2b6cb0',
+            backgroundColor: 'rgba(43,108,176,0.15)',
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('chartUtil'), {
+    type: 'bar',
+    data: {
+        labels: {{ c2_labels | tojson }},
+        datasets: [{
+            label: '% in-use',
+            data: {{ c2_data | tojson }},
+            backgroundColor: '#38b2ac'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+
+new Chart(document.getElementById('chartService'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ c3_labels | tojson }},
+        datasets: [{ data: {{ c3_data | tojson }}, backgroundColor: palette }]
+    },
+    options: { responsive: true }
+});
+
+new Chart(document.getElementById('chartRegion'), {
+    type: 'pie',
+    data: {
+        labels: {{ c4_labels | tojson }},
+        datasets: [{ data: {{ c4_data | tojson }}, backgroundColor: palette }]
+    },
+    options: { responsive: true }
+});
+</script>
+{% endblock %}

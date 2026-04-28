@@ -1,0 +1,381 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+    --primary-dark: #0b1f3a;
+    --primary-blue: #2b6cb0;
+    --primary-blue-light: #4299e1;
+    --accent-cyan: #38b2ac;
+    --text-dark: #1a202c;
+    --text-muted: #718096;
+    --table-header-grey: #f7fafc;
+    --border-color: #e2e8f0;
+    --card-bg: #ffffff;
+    --body-bg: #f7f9fc;
+
+    /* Status palette */
+    --status-good: #2f855a;
+    --status-warn: #d69e2e;
+    --status-bad: #c53030;
+    --status-info: #3182ce;
+    --status-neutral: #718096;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--body-bg);
+    color: var(--text-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+code, .mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* --- CloudNine logo --- */
+.logo-box {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--primary-blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
+    border-radius: 6px;
+}
+
+.logo-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: white;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+/* Navbar */
+.bg-cloud-dark {
+    background-color: var(--primary-dark) !important;
+    border-bottom: 2px solid var(--primary-blue);
+    padding: 12px 0;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white !important;
+}
+
+.nav-link {
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.65) !important;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: white !important;
+}
+
+.nav-link.active {
+    color: var(--primary-blue-light) !important;
+}
+
+.dropdown-menu {
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.dropdown-item {
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 1.2px;
+    font-weight: 500;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+    background-color: var(--primary-blue);
+}
+
+/* --- Tables --- */
+.table-custom thead, .table-hover thead {
+    background-color: var(--table-header-grey);
+    color: var(--primary-dark);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.table-scroll-container {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 4px;
+}
+
+.table-scroll-container table {
+    min-width: 100%;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.table-scroll-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: var(--table-header-grey);
+    z-index: 20;
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    border-top: none;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+.status-good     { background-color: var(--status-good); }
+.status-warn     { background-color: var(--status-warn); }
+.status-bad      { background-color: var(--status-bad); }
+.status-info     { background-color: var(--status-info); }
+.status-neutral  { background-color: var(--status-neutral); }
+
+/* Cards */
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.card-header {
+    padding: 14px 18px !important;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.card-body {
+    padding: 0 !important;
+}
+
+.card-body-content {
+    padding: 18px;
+}
+
+/* KPI cards */
+.kpi-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 18px 20px;
+    text-align: left;
+    height: 100%;
+}
+
+.kpi-label {
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    color: var(--primary-dark);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.85rem;
+    line-height: 1.1;
+}
+
+.kpi-sub {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 4px;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 4px !important;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.8px;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+.btn-outline-dark {
+    border-color: var(--primary-dark);
+    color: var(--primary-dark);
+}
+.btn-outline-dark:hover {
+    background-color: var(--primary-dark);
+    color: white;
+}
+
+/* Hero */
+.hero-banner {
+    position: relative;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(56,178,172,0.25), transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(66,153,225,0.30), transparent 55%),
+        linear-gradient(135deg, #0b1f3a 0%, #1a365d 60%, #2b6cb0 100%);
+    background-size: cover;
+    background-position: center;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+}
+
+.hero-text { z-index: 2; }
+
+.hero-text h1 {
+    font-size: 3rem;
+    margin-bottom: 8px;
+    color: white;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.hero-text p {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    color: var(--primary-blue-light);
+}
+
+/* Utilization bars (matches CloudNine static dashboard look) */
+.util-bar {
+    background: var(--border-color);
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    width: 140px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.util-bar-inner {
+    height: 100%;
+    border-radius: 6px;
+}
+.util-high { background-color: var(--status-bad); }
+.util-med  { background-color: var(--status-warn); }
+.util-low  { background-color: var(--status-good); }
+
+/* Section title */
+.section-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Detail grid */
+.detail-grid dt {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.detail-grid dd {
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+/* Tag chips */
+.chip {
+    display: inline-block;
+    padding: 3px 9px;
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.72rem;
+    color: var(--text-dark);
+    margin: 2px 2px;
+}
+
+/* Resource icon block on detail page */
+.resource-hero {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
+    color: white;
+    padding: 24px;
+    border-radius: 6px;
+    position: relative;
+}
+.resource-hero h2 { color: white; margin-bottom: 4px; }
+.resource-hero .mono { color: var(--primary-blue-light); }
+
+/* Timeline (deployment events) */
+.timeline { list-style: none; padding-left: 0; border-left: 2px solid var(--border-color); margin-left: 8px; }
+.timeline li { position: relative; padding: 8px 0 8px 20px; }
+.timeline li::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    border: 2px solid white;
+}
+.timeline .event-time { color: var(--text-muted); font-size: 0.78rem; }
+
+/* Misc */
+a { color: var(--primary-blue); text-decoration: none; }
+a:hover { color: var(--primary-dark); text-decoration: underline; }
+
+.text-money { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.text-muted-sm { color: var(--text-muted); font-size: 0.82rem; }
