@@ -1357,7 +1357,14 @@ def capacity():
         JOIN availability_zone az ON dc.zoneId       = az.zoneId
         JOIN region reg        ON az.regionId        = reg.regionId
         WHERE 1=1 {extra_sql}
-        ORDER BY rt.typeName, res.serialNumber
+        ORDER BY
+            CASE
+                WHEN reservationId IS NOT NULL THEN 1
+                WHEN res.status = 'maintenance' THEN 3
+                ELSE 2
+            END,
+            rt.typeName,
+            res.serialNumber
     """, [to_date, from_date] * 5 + params).fetchall()
 
     # KPIs

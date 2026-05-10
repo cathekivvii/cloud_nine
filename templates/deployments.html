@@ -55,7 +55,7 @@
                 <td class="text-muted-sm">{{ d.startedAt }}</td>
                 <td class="text-muted-sm">{{ d.stoppedAt or '—' }}</td>
                 <td>{{ d.active_resources }}</td>
-                <td>{% if d.autoScale %}<span class="chip">on</span>{% else %}<span class="text-muted-sm">off</span>{% endif %}</td>
+                <td class="text-muted-sm">{% if d.autoScale %}on{% else %}off{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -20,10 +20,7 @@
                 <td class="text-muted-sm">{{ cc.ownerName }}</td>
                 <td class="text-money">${{ '{:,.2f}'.format(cc.spend) }}</td>
                 <td class="text-muted-sm">${{ '{:,.0f}'.format(cc.budgetLimit or 0) }}</td>
-                <td>
-                    <span class="util-bar"><span class="util-bar-inner {{ util_class(pct) }}" style="width:{{ pct if pct < 100 else 100 }}%"></span></span>
-                    <span class="text-muted-sm ms-2">{{ '%.0f' % pct }}%</span>
-                </td>
+                <td>{{ '%.0f' % pct }}%</td>
             </tr>
             {% endfor %}
         </tbody>
