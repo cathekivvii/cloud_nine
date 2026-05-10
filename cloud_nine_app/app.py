@@ -45,13 +45,15 @@ def status_class(value):
     if not value:
         return 'status-neutral'
     v = str(value).lower()
-    if v in ('active', 'in-use', 'operational', 'paid', 'completed', 'finalized', 'confirmed'):
+    if v in ('active', 'in-use', 'operational', 'paid', 'finalized', 'confirmed'):
         return 'status-good'
     if v in ('pending', 'maintenance', 'scheduled'):
         return 'status-warn'
-    if v in ('terminated', 'inactive', 'overdue', 'cancelled', 'expired'):
+    if v in ('terminated',):
+        return 'status-orange'
+    if v in ('inactive', 'overdue', 'cancelled', 'expired'):
         return 'status-bad'
-    if v in ('available',):
+    if v in ('available', 'completed'):
         return 'status-info'
     return 'status-neutral'
 
@@ -608,6 +610,7 @@ def reservations():
         FROM reservation r
         JOIN client c ON r.clientId = c.clientId
         LEFT JOIN project p ON r.projectId = p.projectId
+        LEFT JOIN organization o ON c.orgId = o.orgId
         WHERE 1=1
     """
     params = []
@@ -618,9 +621,9 @@ def reservations():
         sql += " AND r.priority = ?"
         params.append(priority_filter)
     if search:
-        sql += " AND (c.firstName LIKE ? OR c.lastName LIKE ? OR p.projectName LIKE ?)"
+        sql += " AND (c.firstName LIKE ? OR c.lastName LIKE ? OR c.firstName || ' ' || c.lastName LIKE ? OR p.projectName LIKE ? OR o.orgName LIKE ?)"
         s = f'%{search}%'
-        params.extend([s, s, s])
+        params.extend([s, s, s, s, s])
     sql += f" ORDER BY {sort_col} {order}"
     rows = db.execute(sql, params).fetchall()
 
@@ -660,6 +663,132 @@ def reservation_detail(reservation_id):
     return render_template('reservation_detail.html',
                            resv=resv, res_resources=res_resources, deployments=deployments,
                            active_page='reservations')
+
+
+@app.route('/reservation/<int:reservation_id>/edit', methods=['GET', 'POST'])
+def reservation_edit(reservation_id):
+    db = get_db()
+    resv = db.execute("""
+        SELECT r.*, c.firstName || ' ' || c.lastName AS clientName, c.clientId
+        FROM reservation r
+        JOIN client c ON r.clientId = c.clientId
+        WHERE r.reservationId = ?
+    """, (reservation_id,)).fetchone()
+    if not resv:
+        abort(404)
+
+    def normalize_datetime(value):
+        if not value:
+            return ''
+        value = value.replace('T', ' ')
+        if len(value) == 16:
+            value += ':00'
+        return value
+
+    def render_edit(error=None):
+        current_resource_ids = set(
+            row[0] for row in db.execute(
+                "SELECT resourceId FROM reservation_resource WHERE reservationId=?",
+                (reservation_id,)
+            ).fetchall()
+        )
+        projects_list = db.execute("""
+            SELECT p.projectId, p.projectName, c.firstName || ' ' || c.lastName AS clientName
+            FROM project p JOIN client c ON p.clientId = c.clientId
+            WHERE p.clientId = ?
+            ORDER BY p.projectName
+        """, (resv['clientId'],)).fetchall()
+        all_resources = db.execute("""
+            SELECT res.resourceId, res.serialNumber, res.status,
+                   rt.typeName, dc.name AS datacenterName, r.regionName
+            FROM resource res
+            JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
+            JOIN data_center dc ON res.datacenterId = dc.datacenterId
+            JOIN availability_zone az ON dc.zoneId = az.zoneId
+            JOIN region r ON az.regionId = r.regionId
+            WHERE res.status IN ('available', 'in-use')
+               OR res.resourceId IN (
+                   SELECT resourceId FROM reservation_resource WHERE reservationId = ?
+               )
+            ORDER BY rt.typeName, res.serialNumber
+        """, (reservation_id,)).fetchall()
+        statuses = ['pending', 'confirmed', 'completed', 'cancelled']
+        return render_template('reservation_edit.html',
+                               resv=resv, projects=projects_list,
+                               all_resources=all_resources,
+                               current_resource_ids=current_resource_ids,
+                               statuses=statuses,
+                               error=error,
+                               active_page='reservations')
+
+    if request.method == 'POST':
+        start_time    = normalize_datetime(request.form.get('start_time'))
+        end_time      = normalize_datetime(request.form.get('end_time'))
+        priority      = request.form.get('priority', 'standard')
+        status        = request.form.get('status', 'pending')
+        deposit       = request.form.get('deposit_amount') or 0
+        project_id    = request.form.get('project_id') or None
+        try:
+            new_res_ids = set(int(x) for x in request.form.getlist('resource_ids'))
+        except ValueError:
+            return render_edit('Invalid resource selection.')
+
+        if not start_time or not end_time or end_time <= start_time:
+            return render_edit('End time must be after start time.')
+
+        if project_id:
+            project_owner = db.execute(
+                "SELECT clientId FROM project WHERE projectId = ?",
+                (project_id,)
+            ).fetchone()
+            if not project_owner or project_owner['clientId'] != resv['clientId']:
+                return render_edit('Selected project does not belong to this client.')
+
+        if new_res_ids:
+            placeholders = ','.join('?' for _ in new_res_ids)
+            conflicts = db.execute(f"""
+                SELECT DISTINCT res.serialNumber, r.reservationId
+                FROM reservation_resource rr
+                JOIN reservation r ON rr.reservationId = r.reservationId
+                JOIN resource res ON rr.resourceId = res.resourceId
+                WHERE rr.resourceId IN ({placeholders})
+                  AND r.reservationId != ?
+                  AND r.status IN ('pending', 'confirmed')
+                  AND r.startTime < ?
+                  AND r.endTime > ?
+                ORDER BY res.serialNumber
+            """, [*new_res_ids, reservation_id, end_time, start_time]).fetchall()
+            if conflicts:
+                conflict_names = ', '.join(row['serialNumber'] for row in conflicts)
+                return render_edit(f'Resource conflict for: {conflict_names}.')
+
+        db.execute("""
+            UPDATE reservation
+            SET startTime=?, endTime=?, priority=?, status=?, depositAmount=?, projectId=?
+            WHERE reservationId=?
+        """, (start_time, end_time, priority, status, deposit, project_id, reservation_id))
+
+        old_res_ids = set(
+            row[0] for row in db.execute(
+                "SELECT resourceId FROM reservation_resource WHERE reservationId=?",
+                (reservation_id,)
+            ).fetchall()
+        )
+        now = SYSTEM_DATE.strftime('%Y-%m-%d %H:%M:%S')
+        for rid in new_res_ids - old_res_ids:
+            db.execute(
+                "INSERT INTO reservation_resource (reservationId, resourceId, assignedAt) VALUES (?,?,?)",
+                (reservation_id, rid, now)
+            )
+        for rid in old_res_ids - new_res_ids:
+            db.execute(
+                "DELETE FROM reservation_resource WHERE reservationId=? AND resourceId=?",
+                (reservation_id, rid)
+            )
+        db.commit()
+        return redirect(url_for('reservation_detail', reservation_id=reservation_id))
+
+    return render_edit()
 
 
 @app.route('/reservations/new', methods=['GET', 'POST'])
@@ -749,6 +878,7 @@ def deployments():
         JOIN reservation r ON d.reservationId = r.reservationId
         JOIN client c ON r.clientId = c.clientId
         LEFT JOIN project p ON d.projectId = p.projectId
+        LEFT JOIN organization o ON c.orgId = o.orgId
         WHERE 1=1
     """
     params = []
@@ -756,9 +886,9 @@ def deployments():
         sql += " AND d.status = ?"
         params.append(status_filter)
     if search:
-        sql += " AND (d.deploymentName LIKE ? OR c.firstName LIKE ? OR c.lastName LIKE ?)"
+        sql += " AND (d.deploymentName LIKE ? OR c.firstName LIKE ? OR c.lastName LIKE ? OR c.firstName || ' ' || c.lastName LIKE ? OR o.orgName LIKE ?)"
         s = f'%{search}%'
-        params.extend([s, s, s])
+        params.extend([s, s, s, s, s])
     sql += f" ORDER BY {sort_col} {order}"
     rows = db.execute(sql, params).fetchall()
 
@@ -1097,7 +1227,130 @@ def staff():
     return render_template('staff.html', staff=rows, active_page='staff')
 
 
-# ---------- 11. Reports ----------
+# ---------- 11. Capacity ----------
+
+@app.route('/capacity')
+def capacity():
+    db = get_db()
+    from_date = request.args.get('from_date', SYSTEM_DATE.strftime('%Y-%m-%d'))
+    to_date   = request.args.get('to_date',   (SYSTEM_DATE + timedelta(days=30)).strftime('%Y-%m-%d'))
+    type_filter   = request.args.get('type', 'All')
+    region_filter = request.args.get('region', 'All')
+
+    # Base filters
+    extra_sql, params = '', []
+    if type_filter != 'All':
+        extra_sql += " AND rt.typeName = ?"
+        params.append(type_filter)
+    if region_filter != 'All':
+        extra_sql += " AND reg.regionName = ?"
+        params.append(region_filter)
+
+    # Pick one matching reservation per resource so KPI totals stay resource-based.
+    rows = db.execute(f"""
+        SELECT res.resourceId, res.serialNumber, res.status,
+               rt.typeName, dc.name AS datacenterName, reg.regionName,
+               (
+                   SELECT resv.reservationId
+                   FROM reservation_resource rr
+                   JOIN reservation resv ON rr.reservationId = resv.reservationId
+                   WHERE rr.resourceId = res.resourceId
+                     AND resv.status IN ('confirmed','pending')
+                     AND resv.startTime < ? AND resv.endTime > ?
+                   ORDER BY resv.startTime
+                   LIMIT 1
+               ) AS reservationId,
+               (
+                   SELECT resv.startTime
+                   FROM reservation_resource rr
+                   JOIN reservation resv ON rr.reservationId = resv.reservationId
+                   WHERE rr.resourceId = res.resourceId
+                     AND resv.status IN ('confirmed','pending')
+                     AND resv.startTime < ? AND resv.endTime > ?
+                   ORDER BY resv.startTime
+                   LIMIT 1
+               ) AS startTime,
+               (
+                   SELECT resv.endTime
+                   FROM reservation_resource rr
+                   JOIN reservation resv ON rr.reservationId = resv.reservationId
+                   WHERE rr.resourceId = res.resourceId
+                     AND resv.status IN ('confirmed','pending')
+                     AND resv.startTime < ? AND resv.endTime > ?
+                   ORDER BY resv.startTime
+                   LIMIT 1
+               ) AS endTime,
+               (
+                   SELECT c.firstName || ' ' || c.lastName
+                   FROM reservation_resource rr
+                   JOIN reservation resv ON rr.reservationId = resv.reservationId
+                   JOIN client c ON resv.clientId = c.clientId
+                   WHERE rr.resourceId = res.resourceId
+                     AND resv.status IN ('confirmed','pending')
+                     AND resv.startTime < ? AND resv.endTime > ?
+                   ORDER BY resv.startTime
+                   LIMIT 1
+               ) AS clientName,
+               (
+                   SELECT c.clientId
+                   FROM reservation_resource rr
+                   JOIN reservation resv ON rr.reservationId = resv.reservationId
+                   JOIN client c ON resv.clientId = c.clientId
+                   WHERE rr.resourceId = res.resourceId
+                     AND resv.status IN ('confirmed','pending')
+                     AND resv.startTime < ? AND resv.endTime > ?
+                   ORDER BY resv.startTime
+                   LIMIT 1
+               ) AS clientId
+        FROM resource res
+        JOIN resource_type rt  ON res.resourceTypeId = rt.resourceTypeId
+        JOIN data_center dc    ON res.datacenterId   = dc.datacenterId
+        JOIN availability_zone az ON dc.zoneId       = az.zoneId
+        JOIN region reg        ON az.regionId        = reg.regionId
+        WHERE 1=1 {extra_sql}
+        ORDER BY rt.typeName, res.serialNumber
+    """, [to_date, from_date] * 5 + params).fetchall()
+
+    # KPIs
+    total      = len(rows)
+    booked     = sum(1 for r in rows if r['reservationId'] is not None)
+    in_maint   = sum(1 for r in rows if r['status'] == 'maintenance')
+    available  = total - booked - in_maint
+
+    # Summary by type
+    type_summary = db.execute(f"""
+        SELECT rt.typeName,
+               COUNT(DISTINCT res.resourceId) AS total,
+               COUNT(DISTINCT CASE WHEN resv.reservationId IS NOT NULL THEN res.resourceId END) AS booked,
+               COUNT(DISTINCT CASE WHEN res.status = 'maintenance' THEN res.resourceId END) AS in_maint
+        FROM resource res
+        JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
+        JOIN data_center dc   ON res.datacenterId   = dc.datacenterId
+        JOIN availability_zone az ON dc.zoneId      = az.zoneId
+        JOIN region reg       ON az.regionId        = reg.regionId
+        LEFT JOIN reservation_resource rr ON res.resourceId = rr.resourceId
+        LEFT JOIN reservation resv ON rr.reservationId = resv.reservationId
+            AND resv.status IN ('confirmed','pending')
+            AND resv.startTime < ? AND resv.endTime > ?
+        WHERE 1=1 {extra_sql}
+        GROUP BY rt.typeName
+        ORDER BY rt.typeName
+    """, [to_date, from_date] + params).fetchall()
+
+    types   = db.execute("SELECT typeName FROM resource_type ORDER BY typeName").fetchall()
+    regions = db.execute("SELECT regionName FROM region ORDER BY regionName").fetchall()
+
+    return render_template('capacity.html',
+                           rows=rows, type_summary=type_summary,
+                           types=types, regions=regions,
+                           from_date=from_date, to_date=to_date,
+                           type_filter=type_filter, region_filter=region_filter,
+                           kpi={'total': total, 'available': available,
+                                'booked': booked, 'in_maint': in_maint},
+                           active_page='capacity')
+
+
+# ---------- 12. Reports ----------
 
 @app.route('/reports')
 def reports():

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Capacity Planner</h2>
+    <span class="text-muted-sm">{{ rows|length }} resources</span>
+</div>
+
+<form method="GET" action="/capacity" class="mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label">From</label>
+            <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">To</label>
+            <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Type</label>
+            <select name="type" class="form-select">
+                <option value="All" {% if type_filter=='All' %}selected{% endif %}>All Types</option>
+                {% for t in types %}
+                <option value="{{ t.typeName }}" {% if type_filter==t.typeName %}selected{% endif %}>{{ t.typeName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Region</label>
+            <select name="region" class="form-select">
+                <option value="All" {% if region_filter=='All' %}selected{% endif %}>All Regions</option>
+                {% for r in regions %}
+                <option value="{{ r.regionName }}" {% if region_filter==r.regionName %}selected{% endif %}>{{ r.regionName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Check Availability</button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="section-title">Total Resources</div>
+                <div class="kpi-value">{{ kpi.total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="section-title">Available</div>
+                <div class="kpi-value" style="color: var(--status-good)">{{ kpi.available }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="section-title">Booked</div>
+                <div class="kpi-value" style="color: var(--status-info)">{{ kpi.booked }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="section-title">In Maintenance</div>
+                <div class="kpi-value" style="color: var(--status-warn)">{{ kpi.in_maint }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">By Resource Type</div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Total</th>
+                    <th>Available</th>
+                    <th>Booked</th>
+                    <th>Maintenance</th>
+                    <th>Utilization</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in type_summary %}
+                {% set avail = t.total - t.booked - t.in_maint %}
+                {% set pct = ((t.booked / t.total) * 100)|round(0)|int if t.total else 0 %}
+                <tr>
+                    <td>{{ t.typeName }}</td>
+                    <td>{{ t.total }}</td>
+                    <td style="color: var(--status-good)"><strong>{{ avail }}</strong></td>
+                    <td style="color: var(--status-info)">{{ t.booked }}</td>
+                    <td style="color: var(--status-warn)">{{ t.in_maint }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="util-bar">
+                                <div class="util-bar-inner {{ util_class(pct) }}" style="width:{{ pct }}%"></div>
+                            </div>
+                            <span class="text-muted-sm">{{ pct }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">All Resources — {{ from_date }} to {{ to_date }}</div>
+    <div class="table-scroll-container">
+        <table class="table table-hover table-custom mb-0">
+            <thead>
+                <tr>
+                    <th>Serial #</th>
+                    <th>Type</th>
+                    <th>Data Center</th>
+                    <th>Region</th>
+                    <th>Availability</th>
+                    <th>Reserved By</th>
+                    <th>Reservation Window</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td class="mono"><a href="/resource/{{ r.resourceId }}">{{ r.serialNumber }}</a></td>
+                    <td class="text-muted-sm">{{ r.typeName }}</td>
+                    <td class="text-muted-sm">{{ r.datacenterName }}</td>
+                    <td class="text-muted-sm">{{ r.regionName }}</td>
+                    <td>
+                        {% if r.status == 'maintenance' %}
+                        <span class="status-badge status-warn">maintenance</span>
+                        {% elif r.reservationId %}
+                        <span class="status-badge status-info">booked</span>
+                        {% else %}
+                        <span class="status-badge status-good">available</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r.clientId %}
+                        <a href="/client/{{ r.clientId }}">{{ r.clientName }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="text-muted-sm">
+                        {% if r.reservationId %}
+                        <a href="/reservation/{{ r.reservationId }}">
+                            {{ r.startTime[:10] }} → {{ r.endTime[:10] }}
+                        </a>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

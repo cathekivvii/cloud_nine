@@ -16,6 +16,7 @@
     --status-good: #2f855a;
     --status-warn: #d69e2e;
     --status-bad: #c53030;
+    --status-orange: #c05621;
     --status-info: #3182ce;
     --status-neutral: #718096;
 }
@@ -158,6 +159,7 @@ code, .mono {
 .status-bad      { background-color: var(--status-bad); }
 .status-info     { background-color: var(--status-info); }
 .status-neutral  { background-color: var(--status-neutral); }
+.status-orange   { background-color: var(--status-orange); }
 
 /* Cards */
 .card {

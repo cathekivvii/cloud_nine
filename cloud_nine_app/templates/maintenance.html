@@ -15,12 +15,12 @@
                 <th>{{ sortable('serialNumber', 'Resource') }}</th>
                 <th>Type</th>
                 <th>{{ sortable('maintenanceType', 'Work') }}</th>
-                <th>Scheduled</th>
                 <th>{{ sortable('scheduledStart', 'Start') }}</th>
                 <th>End</th>
                 <th>Actual End</th>
                 <th>{{ sortable('staffName', 'Staff') }}</th>
                 <th>Notes</th>
+                <th>Schedule</th>
             </tr>
         </thead>
         <tbody>
@@ -30,18 +30,18 @@
                 <td class="mono"><a href="/resource/{{ m.resourceId }}">{{ m.serialNumber }}</a><div class="text-muted-sm">{{ m.typeName }}</div></td>
                 <td class="text-muted-sm">{{ m.datacenterName }}</td>
                 <td>{{ m.maintenanceType }}</td>
-                <td>
-                    {% if m.isScheduled %}
-                    <span class="status-badge status-info">scheduled</span>
-                    {% else %}
-                    <span class="status-badge status-warn">unplanned</span>
-                    {% endif %}
-                </td>
                 <td class="text-muted-sm">{{ m.scheduledStart }}</td>
                 <td class="text-muted-sm">{{ m.scheduledEnd }}</td>
                 <td class="text-muted-sm">{{ m.actualEnd or '—' }}</td>
                 <td>{{ m.staffName }}</td>
                 <td class="text-muted-sm">{{ m.notes or '' }}</td>
+                <td>
+                    {% if m.isScheduled %}
+                    <span class="status-badge status-info">planned</span>
+                    {% else %}
+                    <span class="status-badge status-info">unplanned</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

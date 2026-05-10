@@ -17,6 +17,7 @@
     <div class="text-end">
         <div class="text-muted-sm">Deposit</div>
         <div class="kpi-value text-money">${{ '{:,.2f}'.format(resv.depositAmount or 0) }}</div>
+        <a href="/reservation/{{ resv.reservationId }}/edit" class="btn btn-sm btn-outline-dark mt-2">Edit</a>
     </div>
 </div>
 

@@ -22,7 +22,13 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link {% if active_page=='dashboard' %}active{% endif %}" href="/">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link {% if active_page=='infrastructure' %}active{% endif %}" href="/infrastructure">Infrastructure</a></li>
-                    <li class="nav-item"><a class="nav-link {% if active_page=='resources' %}active{% endif %}" href="/resources">Resources</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if active_page in ['resources','capacity'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">Resources</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if active_page=='resources' %}active{% endif %}" href="/resources">All Resources</a></li>
+                            <li><a class="dropdown-item {% if active_page=='capacity' %}active{% endif %}" href="/capacity">Capacity Planner</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {% if active_page in ['organizations','clients','projects'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">Clients</a>
                         <ul class="dropdown-menu">
