@@ -39,11 +39,3 @@ python3 -c "from app import init_db; init_db()"
 ```
 
 This deletes and recreates the local database.
-
-## Quick Check
-
-Run a syntax check before submitting changes:
-
-```bash
-python3 -m py_compile app.py
-```
