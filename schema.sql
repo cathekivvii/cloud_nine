@@ -1236,8 +1236,8 @@ ORDER BY avgDurationDays DESC;
 -- WHY THIS IS USEFUL: Is CloudNine growing? This is the most
 -- basic business health metric. If monthly revenue is going up,
 -- the company is doing well. If it is flat or declining, something
--- needs to change. This query feeds directly into a line chart
--- on the web interface dashboard.
+-- needs to change. This query supports the Monthly Revenue line
+-- chart on the web interface's Reports page.
 -- ============================================================
 
 SELECT

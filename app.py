@@ -1459,15 +1459,23 @@ def reports():
 
     # 5. Revenue by region
     by_region = db.execute("""
-        SELECT r.regionName, SUM(ch.amount) AS total
+        WITH deployment_region AS (
+            SELECT dr.deploymentId, reg.regionName,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY dr.deploymentId
+                       ORDER BY dr.allocatedAt
+                   ) AS rn
+            FROM deployment_resource dr
+            JOIN resource res ON dr.resourceId = res.resourceId
+            JOIN data_center dc ON res.datacenterId = dc.datacenterId
+            JOIN availability_zone az ON dc.zoneId = az.zoneId
+            JOIN region reg ON az.regionId = reg.regionId
+        )
+        SELECT dreg.regionName, SUM(ch.amount) AS total
         FROM charge ch
-        JOIN deployment d ON ch.deploymentId = d.deploymentId
-        JOIN deployment_resource dr ON d.deploymentId = dr.deploymentId
-        JOIN resource res ON dr.resourceId = res.resourceId
-        JOIN data_center dc ON res.datacenterId = dc.datacenterId
-        JOIN availability_zone az ON dc.zoneId = az.zoneId
-        JOIN region r ON az.regionId = r.regionId
-        GROUP BY r.regionName
+        JOIN deployment_region dreg
+          ON ch.deploymentId = dreg.deploymentId AND dreg.rn = 1
+        GROUP BY dreg.regionName
         ORDER BY total DESC
     """).fetchall()
 
