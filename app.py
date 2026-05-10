@@ -68,6 +68,15 @@ def util_class(pct):
     return 'util-low'
 
 
+def normalize_datetime(value):
+    if not value:
+        return ''
+    value = value.replace('T', ' ')
+    if len(value) == 16:
+        value += ':00'
+    return value
+
+
 @app.context_processor
 def inject_helpers():
     return {
@@ -677,14 +686,6 @@ def reservation_edit(reservation_id):
     if not resv:
         abort(404)
 
-    def normalize_datetime(value):
-        if not value:
-            return ''
-        value = value.replace('T', ' ')
-        if len(value) == 16:
-            value += ':00'
-        return value
-
     def render_edit(error=None):
         current_resource_ids = set(
             row[0] for row in db.execute(
@@ -794,14 +795,88 @@ def reservation_edit(reservation_id):
 @app.route('/reservations/new', methods=['GET', 'POST'])
 def new_reservation():
     db = get_db()
+
+    def render_new(error=None):
+        clients_list = db.execute("""
+            SELECT c.clientId, c.firstName || ' ' || c.lastName AS name, o.orgName
+            FROM client c
+            LEFT JOIN organization o ON c.orgId = o.orgId
+            ORDER BY c.lastName, c.firstName
+        """).fetchall()
+        projects_list = db.execute("""
+            SELECT p.projectId, p.projectName, c.firstName || ' ' || c.lastName AS clientName
+            FROM project p
+            JOIN client c ON p.clientId = c.clientId
+            ORDER BY p.projectName
+        """).fetchall()
+        available_resources = db.execute("""
+            SELECT res.resourceId, res.serialNumber, res.status,
+                   rt.typeName, dc.name AS datacenterName, r.regionName
+            FROM resource res
+            JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
+            JOIN data_center dc ON res.datacenterId = dc.datacenterId
+            JOIN availability_zone az ON dc.zoneId = az.zoneId
+            JOIN region r ON az.regionId = r.regionId
+            WHERE res.status = 'available'
+            ORDER BY rt.typeName, res.serialNumber
+        """).fetchall()
+        return render_template('reservation_new.html',
+                               clients=clients_list, projects=projects_list,
+                               resources=available_resources,
+                               error=error,
+                               active_page='reservations')
+
     if request.method == 'POST':
         client_id = request.form.get('client_id')
         project_id = request.form.get('project_id') or None
-        start_time = request.form.get('start_time')
-        end_time = request.form.get('end_time')
+        start_time = normalize_datetime(request.form.get('start_time'))
+        end_time = normalize_datetime(request.form.get('end_time'))
         priority = request.form.get('priority', 'standard')
         deposit = request.form.get('deposit_amount') or 0
-        resource_ids = request.form.getlist('resource_ids')
+        try:
+            resource_ids = [int(x) for x in request.form.getlist('resource_ids')]
+        except ValueError:
+            return render_new('Invalid resource selection.')
+        resource_ids = sorted(set(resource_ids))
+
+        if not start_time or not end_time or end_time <= start_time:
+            return render_new('End time must be after start time.')
+
+        client = db.execute("SELECT clientId FROM client WHERE clientId = ?", (client_id,)).fetchone()
+        if not client:
+            return render_new('Select a valid client.')
+
+        if project_id:
+            project_owner = db.execute(
+                "SELECT clientId FROM project WHERE projectId = ?",
+                (project_id,)
+            ).fetchone()
+            if not project_owner or project_owner['clientId'] != int(client_id):
+                return render_new('Selected project does not belong to this client.')
+
+        if resource_ids:
+            placeholders = ','.join('?' for _ in resource_ids)
+            valid_resources = db.execute(f"""
+                SELECT COUNT(*) FROM resource
+                WHERE resourceId IN ({placeholders}) AND status = 'available'
+            """, resource_ids).fetchone()[0]
+            if valid_resources != len(set(resource_ids)):
+                return render_new('Selected resources are no longer available.')
+
+            conflicts = db.execute(f"""
+                SELECT DISTINCT res.serialNumber, r.reservationId
+                FROM reservation_resource rr
+                JOIN reservation r ON rr.reservationId = r.reservationId
+                JOIN resource res ON rr.resourceId = res.resourceId
+                WHERE rr.resourceId IN ({placeholders})
+                  AND r.status IN ('pending', 'confirmed')
+                  AND r.startTime < ?
+                  AND r.endTime > ?
+                ORDER BY res.serialNumber
+            """, [*resource_ids, end_time, start_time]).fetchall()
+            if conflicts:
+                conflict_names = ', '.join(row['serialNumber'] for row in conflicts)
+                return render_new(f'Resource conflict for: {conflict_names}.')
 
         cur = db.cursor()
         cur.execute("""
@@ -818,33 +893,7 @@ def new_reservation():
         db.commit()
         return redirect(url_for('reservation_detail', reservation_id=new_id))
 
-    clients_list = db.execute("""
-        SELECT c.clientId, c.firstName || ' ' || c.lastName AS name, o.orgName
-        FROM client c
-        LEFT JOIN organization o ON c.orgId = o.orgId
-        ORDER BY c.lastName, c.firstName
-    """).fetchall()
-    projects_list = db.execute("""
-        SELECT p.projectId, p.projectName, c.firstName || ' ' || c.lastName AS clientName
-        FROM project p
-        JOIN client c ON p.clientId = c.clientId
-        ORDER BY p.projectName
-    """).fetchall()
-    available_resources = db.execute("""
-        SELECT res.resourceId, res.serialNumber, res.status,
-               rt.typeName, dc.name AS datacenterName, r.regionName
-        FROM resource res
-        JOIN resource_type rt ON res.resourceTypeId = rt.resourceTypeId
-        JOIN data_center dc ON res.datacenterId = dc.datacenterId
-        JOIN availability_zone az ON dc.zoneId = az.zoneId
-        JOIN region r ON az.regionId = r.regionId
-        WHERE res.status = 'available'
-        ORDER BY rt.typeName, res.serialNumber
-    """).fetchall()
-    return render_template('reservation_new.html',
-                           clients=clients_list, projects=projects_list,
-                           resources=available_resources,
-                           active_page='reservations')
+    return render_new()
 
 
 # ---------- 8. Deployments ----------

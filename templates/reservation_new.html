@@ -4,6 +4,10 @@
 <div class="mb-2"><a href="/reservations" class="text-muted-sm">← Reservations</a></div>
 <h2 class="mb-3">New Reservation</h2>
 
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
 <form method="POST" action="/reservations/new">
     <div class="row g-3">
         <div class="col-md-6">
